@@ -1,2 +1,2 @@
-# birdbox
+# Birdbox
 BirdBox on Raspberry Pi
