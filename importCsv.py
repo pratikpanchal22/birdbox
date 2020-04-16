@@ -58,14 +58,14 @@ def createTable(tableName, db, col_names, col_data_types):
     cursor.close()
     return
 
-def populateDataWithTable(db, TABLE_NAME, col_names, dataRows):
+def populateDataWithTable(db, table_name, col_names, dataRows):
     cursor = db.cursor()
     numberOfRecordsToCommit=0
     for dataRow in dataRows:
         #print (dataRow)
         if(dataRow[1] == 'TRUE'):
             i=0
-            q1='INSERT INTO birdboxtable ('
+            q1='INSERT INTO '+table_name+' ('
             q2='VALUES ('
             numberOfColumns=0
             while i<len(col_names):
