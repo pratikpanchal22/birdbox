@@ -1,11 +1,40 @@
-<!DOCTYPE html>
-   <head>
-      <title>{{title}}</title>
-   </head>
+<!doctype html>
 
-   <body>
-      <h1>Hello, World!</h1>
-      <h2>The date and time on the server is {{time}}</h2>
-      <h3>DB contents: {{var1}}</h3>
-   </body>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>BirdBox</title>
+    <meta name="description" content="BirdBox">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../static/css/styles.css">
+</head>
+
+<body>
+    <script src="../static/js/scripts.js"></script>
+    
+    <div>
+        <h1 align="center">{{dName}}</h1>
+        <img src="/static/images/{{dImg}}" alt="Test Image" width="90%" height="auto" style="float: middle;">
+        <h4>{{dDesc}}</h4>
+        <h5>{{dPlace}}</h5>
+        <h6>{{dAuthor}}</h6>
+        <h6>{{dDate}}</h6>
+    </div>
+    
+    <center>
+        <br>
+        <h1>
+            <div id='header1'>BirdBox</div>
+        </h1>
+        <hr>
+    </center>
+
+    <div>
+        <p>This is a basic boilerplate template to start with html5 with placeholders for css & js files</p>
+        <!--p class="indent25">Example of a tab</p-->
+    </div>
+
+</body>
+
 </html>
