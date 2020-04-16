@@ -1,5 +1,6 @@
 import os
 import random
+import time
 import MySQLdb
 import dbConfig
 
@@ -93,49 +94,13 @@ updateTsAndActivate(db, TABLE_NAME, candidateRowId)
 #Execute audio file
 #TODO
 osCmd = "mpg321 --gain 100 --verbose " + audioFilePath
-print(osCmd)
+print("os.command: ",osCmd)
+#Simulate for now
+time.sleep(15)
 #os.system(osCmd)
 
 #mark active = false
 deactivateRow(db, TABLE_NAME, candidateRowId)
 
-
 db.close()
 exit()
-
-list = []
-
-for file in os.listdir("./mp3s"):
-    if file.endswith(".mp3"):
-        #print(os.path.join("mp3s", file))
-        list.append(os.path.join("mp3s",file))
-
-
-print("List of mp3s: ", list)
-print("Number of mp3s: ", len(list))
-
-#Get a random index (range is inclusive)
-randomIndex = random.randint(0,len(list)-1)
-print("Random index: ", randomIndex)
-
-print("Candidate mp3: ", list[randomIndex])
-
-#Text description of the mp3
-print("\n###### DESCRIPTION ######")
-fileName = list[randomIndex]
-#print("file identifier: ", fileName[0:-4])
-fileName = fileName[0:-4] + ".txt"
-print("Txt file: ", fileName)
-
-#Image
-#im = Image.open(r"imgs/baldEagle.jpg")
-#im.show()
-
-f = open(fileName, 'r')
-fc = f.read()
-print(fc)
-f.close
-
-print("\n###### ROUTING TO AUDIO ######")
-
-
