@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.config['MYSQL_USER'] = 'user'
 app.config['MYSQL_PASSWORD'] = 'password'
 app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_DB'] = 'temps'
+app.config['MYSQL_DB'] = 'birdbox'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 mysql = MySQL(app)
@@ -24,25 +24,72 @@ def index():
     timeString = now.strftime("%Y-%m-%d %H:%M:%S")
 
     cursor = mysql.connection.cursor()
-    #cursor.execute('CREATE TABLE example (id INTEGER, name VARCHAR(20))')
 
-    cursor.execute('SELECT * FROM tempdat')
+    tableName = 'birdboxTable'
+    #query = "SELECT image_file, audio_file, name, description, location, author, organization, date_created_or_captured FROM "+tableName+" where active = true;"
+    query = "SELECT * FROM "+tableName+" where active = true;"
+    cursor.execute(query)
     
-    #return str(results[5]['temperature'])
-    row_headers=[x[0] for x in cursor.description]
-    results = cursor.fetchall()
+    #row_headers=[x[0] for x in cursor.description]
 
-    json = []
-    for result in results:
-        json.append(dict(zip(row_headers,result)))
+    entries = cursor.fetchall() #[item[0] for item in cursor.fetchall()]
+    #TODO: Make sure this is always exactly 1
+    print("Number of rows returned: ", len(entries))
+
+    #for row in entry:
+    #    print("{0} {1} {2} {3}\n".format(row["id"], row["last_updated"], row["audio_file"], row["date_created_or_captured"]))
+    
+    #while i<len(e):
+    #    #print(col_names[i]," ",col_data_types[i],",")
+    #    if(e[i] is None):
+    #        e[i] = "empty"
+    #    
+    #    i+=1
+    
+    dOnStage = False
+    dName = ''
+    dImg = ''
+    dAudio = ''
+    dDesc = ''
+    dPlace = ''
+    dAuthor = ''
+    dDate = ''
+    dOrg = ''
+
+    if len(entries) != 1:
+        print("Error. Expected entry length is EXACTLY 1")
+        dOnStage = False
+    else:
+        e = entries[0]
+        print(e)
+        dOnStage = True
+        dName = e["name"]
+        dImg = e["image_file"]
+        dAudio = e["audio_file"]
+        dDesc = e["description"]
+        dPlace = e["location"]
+        dAuthor = e["author"]
+        dDate = e["date_created_or_captured"]
+        dOrg = e["organization"]
+    
+    print("Item on stage: ",dOnStage)
+    print("Image file: ",dImg)
+    print("Audio file: ",dAudio)
+    print("Name: ",dName)
+    print("Description: ",dDesc)
+    print("Location: ",dPlace)
+    print("Author: ",dAuthor)
+    print("Organization: ",dOrg)
 
     templateData = {
-        'dName' : 'Meadow Larks',
-        'dImg': 'baldEagle.jpg',
-        'dDesc' : 'The entropy of the universe increases with time. The total amount of free energy available for useful work decreases as time progresses.',
-        'dPlace' : 'M384 Galaxy',
-        'dAuthor' : 'Fellow Trooper',
-        'dDate' : timeString
+        'dOnStage' : dOnStage,
+        'dName' : dName,
+        'dImg': dImg,
+        'dDesc' : dDesc,
+        'dPlace' : dPlace,
+        'dAuthor' : dAuthor,
+        'dDate' : timeString,
+        'dOrg' : dOrg
     }
     return render_template('index.html', **templateData)
 
