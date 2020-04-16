@@ -104,10 +104,6 @@ def populateDataWithTable(db, table_name, col_names, dataRows):
     return
 
 CSV_FILE = 'BirdBox - birdbox_table.csv'
-#csv_data = csv.reader(file(CSV_FILE))
-
-#for row in csv_data:
-#    print(row)
 
 col_names = ''
 col_data_types = ''
@@ -160,3 +156,4 @@ populateDataWithTable(db, TABLE_NAME, col_names, dataRows)
 
 
 db.close()
+exit()
