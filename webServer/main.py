@@ -1,10 +1,11 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 #import fetchAllData
 from flask_mysqldb import MySQL
 #import MySQLdb
 
 #import mysql.connector as connector
 import datetime
+import time
 
 app = Flask(__name__)
 
@@ -16,11 +17,17 @@ app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 mysql = MySQL(app)
 
-
+def fetchOnStageMetadata():
+    cursor = mysql.connection.cursor()
+    tableName = 'birdboxTable'
+    query = "SELECT * FROM "+tableName+" where active = true;"
+    cursor.execute(query)
+    return cursor.fetchall()
 
 @app.route("/")
 def index():
     now = datetime.datetime.now()
+    ts = str(int(time.time()))
     timeString = now.strftime("%Y-%m-%d %H:%M:%S")
 
     cursor = mysql.connection.cursor()
@@ -81,6 +88,8 @@ def index():
     print("Author: ",dAuthor)
     print("Organization: ",dOrg)
 
+    jsInclude = '<script src="/static/js/scripts.js?t='+ts+'"></script>'
+    
     templateData = {
         'dOnStage' : dOnStage,
         'dName' : dName,
@@ -89,9 +98,36 @@ def index():
         'dPlace' : dPlace,
         'dAuthor' : dAuthor,
         'dDate' : timeString,
-        'dOrg' : dOrg
+        'dOrg' : dOrg,
+        'jsInclude' : jsInclude
     }
     return render_template('index.html', **templateData)
+
+@app.route("/onStage.json")
+def onStage():
+    json = {
+        "state":"unknown"
+    }
+    entries = fetchOnStageMetadata()
+
+    if(len(entries)==1):
+        json["state"] = "successful"
+        e = entries[0]
+        json["id"] = e["id"]
+        json["name"] = e["name"]
+        json["image_file"] = e["image_file"]
+        json["audio_file"] = e["audio_file"]
+        json["description"] = e["description"]
+        json["location"] = e["location"]
+        json["author"] = e["author"]
+        json["date_created_or_captured"] = e["date_created_or_captured"]
+        json["organization"] = e["organization"]
+    elif(len(entries)==0):
+        json["state"] = "empty"
+    else:
+        json["state"] = "multiple_entries"+str(len(entries))   
+        
+    return jsonify(json)
 
 @app.route("/temps")
 def temps():
