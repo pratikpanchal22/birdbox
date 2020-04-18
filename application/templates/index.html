@@ -14,13 +14,24 @@
 <body>
     <div id="idDivStage" style='display: none;'>
         <center>
-            <h1 id="idStageName"></h1> <!-- Name -->
-            <img id="idStageImage" src="" alt="Stage Image" width="95%" height="auto">
+            <p id="idStageSoundState"></p>
+            <h2 id="idStageName"></h2> <!-- Name -->
+            <img id="idStageImage" src="" alt="Stage Image" width="100%" height="auto">
         </center>
-        <h4 id="idStageDescription"></h4> <!-- Description -->
-        <h5 id="idStageLocation"></h5> <!-- Location -->
-        <h6 id="idStageAuthor"></h6> <!-- Author -->
-        <h6 id="idStageDate"></h6> <!-- Capture date -->
+        <h6 id="idStageImageDesc"></h6> <!-- Image description -->
+        <p id="idStageAudioDesc"></p> <!-- Audio Description -->
+        <p id="idStageAudioType"></p> <!-- Audio Type -->
+
+        <p id="idStageLocation"></p> <!-- Location -->
+        <p id="idStageDuration"></p> <!-- Duration -->
+        <p id="idStageCredits"></p> <!-- Credits -->
+        <center>
+            <hr>
+            <p>Listen on this device</p>
+            <audio id="idAudio" controls>
+                <source id="idAudioSrcMp3" src="" type="audio/mp3">
+            </audio>
+        </center>
     </div>
     
     <center>
@@ -31,7 +42,7 @@
     </center>
 
     <div>
-        <p>This is a basic boilerplate template to start with html5 with placeholders for css & js files</p>
+        <a href="onDemand.json">Request OnDemand</a>
         <!--p class="indent25">Example of a tab</p-->
     </div>
 

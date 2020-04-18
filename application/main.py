@@ -1,6 +1,7 @@
 from flask import Flask, render_template, jsonify
 #import fetchAllData
 from flask_mysqldb import MySQL
+import os
 #import MySQLdb
 
 #import mysql.connector as connector
@@ -28,80 +29,32 @@ def fetchOnStageMetadata():
 def index():
     now = datetime.datetime.now()
     ts = str(int(time.time()))
-    timeString = now.strftime("%Y-%m-%d %H:%M:%S")
-
-    cursor = mysql.connection.cursor()
-
-    tableName = 'birdboxTable'
-    #query = "SELECT image_file, audio_file, name, description, location, author, organization, date_created_or_captured FROM "+tableName+" where active = true;"
-    query = "SELECT * FROM "+tableName+" where active = true;"
-    cursor.execute(query)
-    
-    #row_headers=[x[0] for x in cursor.description]
-
-    entries = cursor.fetchall() #[item[0] for item in cursor.fetchall()]
-    #TODO: Make sure this is always exactly 1
-    print("Number of rows returned: ", len(entries))
-
-    #for row in entry:
-    #    print("{0} {1} {2} {3}\n".format(row["id"], row["last_updated"], row["audio_file"], row["date_created_or_captured"]))
-    
-    #while i<len(e):
-    #    #print(col_names[i]," ",col_data_types[i],",")
-    #    if(e[i] is None):
-    #        e[i] = "empty"
-    #    
-    #    i+=1
-    
-    dOnStage = False
-    dName = ''
-    dImg = ''
-    dAudio = ''
-    dDesc = ''
-    dPlace = ''
-    dAuthor = ''
-    dDate = ''
-    dOrg = ''
-
-    if len(entries) != 1:
-        print("Error. Expected entry length is EXACTLY 1")
-        dOnStage = False
-    else:
-        e = entries[0]
-        print(e)
-        dOnStage = True
-        dName = e["name"]
-        dImg = e["image_file"]
-        dAudio = e["audio_file"]
-        dDesc = e["description"]
-        dPlace = e["location"]
-        dAuthor = e["author"]
-        dDate = e["date_created_or_captured"]
-        dOrg = e["organization"]
-    
-    print("Item on stage: ",dOnStage)
-    print("Image file: ",dImg)
-    print("Audio file: ",dAudio)
-    print("Name: ",dName)
-    print("Description: ",dDesc)
-    print("Location: ",dPlace)
-    print("Author: ",dAuthor)
-    print("Organization: ",dOrg)
+    #timeString = now.strftime("%Y-%m-%d %H:%M:%S")
 
     jsInclude = '<script src="/static/js/scripts.js?t='+ts+'"></script>'
     
     templateData = {
-        'dOnStage' : dOnStage,
-        'dName' : dName,
-        'dImg': dImg,
-        'dDesc' : dDesc,
-        'dPlace' : dPlace,
-        'dAuthor' : dAuthor,
-        'dDate' : timeString,
-        'dOrg' : dOrg,
         'jsInclude' : jsInclude
     }
     return render_template('index.html', **templateData)
+
+@app.route("/onDemand.json")
+def onDemand():
+    now = datetime.datetime.now()
+    ts = str(int(time.time()))
+
+    osCmd = "python3 playAudioFileDbIntegration.py"
+    print("Invoking onDemand: ",osCmd)
+
+    response = {
+        "osCmd":osCmd,
+        "state":"successful",
+        "ts": ts
+    }
+
+    os.system(osCmd)
+
+    return jsonify(response)
 
 @app.route("/onStage.json")
 def onStage():
@@ -115,13 +68,16 @@ def onStage():
         e = entries[0]
         json["id"] = e["id"]
         json["name"] = e["name"]
-        json["image_file"] = e["image_file"]
         json["audio_file"] = e["audio_file"]
+        json["audio_type"] = e["audio_type"]
         json["description"] = e["description"]
-        json["location"] = e["location"]
-        json["author"] = e["author"]
+        json["duration"] = e["duration"]
+        json["credit"] = e["credit"]
         json["date_created_or_captured"] = e["date_created_or_captured"]
-        json["organization"] = e["organization"]
+        json["image_file"] = e["image_file"]
+        json["image_desc"] = e["image_desc"]
+        json["location"] = e["location"]
+        json["url"] = e["url"]
     elif(len(entries)==0):
         json["state"] = "empty"
     else:

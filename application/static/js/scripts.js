@@ -42,6 +42,8 @@ $(document).ready(function(){
         console.log("Nothing active right now")
         collapseStage();
         //change: 'you are listening to' to 'you heard'
+        //document.getElementById('idStageSoundState').innerHTML = "You were listening to";
+        $('#idStageSoundState').text("You were listening to");
     }
     else {
         console.log("Error: State: " + jsonObj["state"])
@@ -51,16 +53,50 @@ $(document).ready(function(){
 
  function updateStage(jsonObj){
 
+    //SoundState
+    //document.getElementById('idStageSoundState').innerHTML = "You are listening to";
+    $('#idStageSoundState').text("You are listening to");
+
     //Name 
     document.getElementById('idStageName').innerHTML = jsonObj["name"];
 
     //Image
-    document.getElementById('idStageImage').src = 'static/images/stageImage.JPG?t='+Math.random();
+    document.getElementById('idStageImage').src = 'static/images/'+ jsonObj["image_file"] +'?t='+Math.random();
+
+    //Image description
+    document.getElementById('idStageImageDesc').innerHTML = jsonObj["image_desc"];
+
+    //Audio - description
+    document.getElementById('idStageAudioDesc').innerHTML = jsonObj["description"];
+
+    //Audio - type
+    document.getElementById('idStageAudioType').innerHTML = "&#9838; Type: "+ jsonObj["audio_type"];
+
+    //Audio - Location
+    document.getElementById('idStageLocation').innerHTML = "&#127966; "+ jsonObj["location"];
+
+    //Duration
+    document.getElementById('idStageDuration').innerHTML = "&#9202; "+ jsonObj["duration"] + " seconds";
+
+    //Credits
+    document.getElementById('idStageCredits').innerHTML = jsonObj["date_created_or_captured"] + ", " + jsonObj["credit"];
+
+    //Audio
+    var audio = $("#idAudio");
+    var sourceUrl = 'static/sounds/'+jsonObj["audio_file"]+'?t='+Math.random();
+    $("#idAudioSrcMp3").attr("src", sourceUrl);
+    audio[0].pause(); //pause
+    audio[0].currentTime = 0; //reset time
+    audio[0].load(); // reload source
+
+
     
     //Enable stage
-    document.getElementById("idDivStage").style.display = "block";
+    //document.getElementById("idDivStage").style.display = "block";
+    $(document.getElementById("idDivStage")).fadeIn(4000)
  }
 
  function collapseStage(){
-    document.getElementById("idDivStage").style.display = "none";
+    //document.getElementById("idDivStage").style.display = "none";
+    $(document.getElementById("idDivStage")).fadeOut(4000)
  }
