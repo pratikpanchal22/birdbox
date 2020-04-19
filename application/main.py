@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 #import fetchAllData
 from flask_mysqldb import MySQL
 import os
@@ -60,9 +60,24 @@ def onDemand():
 
 @app.route("/onStage.json")
 def onStage():
+    now = datetime.datetime.now()
+    ts = str(int(time.time()))
+    
+    t = request.args.get("t")
+
+    print("local ts=",ts," t=",t," diff=",int(ts)-int(t))
+
     json = {
-        "state":"unknown"
+        "state":"unknown",
+        "ts":ts
     }
+
+    if(int(ts) - int(t) > 2):
+        #Request too old
+        json["state"] = "request too old"
+        print("Rejecting request because it is too old", json)
+        return jsonify(json)
+
     entries = fetchOnStageMetadata()
 
     if(len(entries)==1):

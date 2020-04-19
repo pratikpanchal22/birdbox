@@ -1,5 +1,6 @@
 //Globals
 stageJsonObj = {};
+settingsViewEnabled = false;
 
 $(document).ready(function(){
     if (!jQuery) {  
@@ -14,11 +15,16 @@ $(document).ready(function(){
 
  function initializations(){
      stageJsonObj = {"id":-1};
+
+     //click handlers
+     $("#header-left").click(function(){
+        settingsClickHandler();
+     });
      return;
  }
 
  function getOnStageMetadata(){
-     $.getJSON("onStage.json?t="+Date.now(), function(result){
+     $.getJSON("onStage.json?t="+Math.floor(Date.now()/1000), function(result){
          processStage(result);
      }).done(function(){
          setTimeout('getOnStageMetadata()', 2000);
@@ -26,8 +32,22 @@ $(document).ready(function(){
  }
  
  function processStage(jsonObj){
-    //console.log(jsonObj);
-    //jsonObj = JSON.parse(result);
+    //Indicator
+    updateStatusIndicator()
+
+    localTs = Math.floor(Date.now() / 1000);
+    remoteTs = parseInt(jsonObj["ts"]);
+    diff = localTs - remoteTs;
+    console.log("Local: "+Math.floor(Date.now() / 1000)
+        +"  Remote: "+jsonObj["ts"]
+        +"  Difference: "+diff);
+
+    if(diff > 1){
+        console.log("Data too old. Skipping");
+        return;
+    }
+
+
     if(jsonObj["state"] == "successful"){
         if(stageJsonObj["id"] != jsonObj["id"]){
             stageJsonObj["id"] = jsonObj["id"]
@@ -49,6 +69,55 @@ $(document).ready(function(){
         console.log("Error: State: " + jsonObj["state"])
         //hide stage
     }
+ }
+
+ function updateStatusIndicator1(){
+    
+    var current = $("#header-right").html();
+    var newVal = "&#128993;";
+
+    //console.log("Div.text: " + current);
+    
+    if(current == "🟢") {
+        newVal = "&#128993;";
+    }
+    else {
+        newVal = "&#128994;"
+    }
+    //console.log("New val: " + newVal);
+    $("#header-right").html(newVal);
+ }
+
+ function updateStatusIndicator(){
+    
+    var current = $("#header-right").html();
+    var newVal = "&#128038;";
+
+    //console.log("Div.text: " + current);
+    
+    if(current == "🐦") {
+        newVal = "🦃";
+    }
+    else if (current == "🦃"){
+        newVal = "🦅";
+    }
+    else if (current == "🦅"){
+        newVal = "🦆";
+    }
+    else if (current == "🦆"){
+        newVal = "🦉";
+    }
+    else if (current == "🦉"){
+        newVal = "🦚";
+    }    
+    else if (current == "🦚"){
+        newVal = "🦜";
+    }
+    else {
+        newVal = "🐦";
+    }
+    //console.log("New val: " + newVal);
+    $("#header-right").html(newVal);
  }
 
  function updateStage(jsonObj){
@@ -110,4 +179,8 @@ $(document).ready(function(){
             {opacity: 0},
             {queue: false, duration: 2000}
         );
+ }
+
+ function settingsClickHandler(){
+    console.log("settings clicked");
  }

@@ -12,3 +12,36 @@ body {
     padding-right: 15px;
     background-color: #e8f8ff;
 }
+
+#idMainName {
+    padding-left: 30px;
+    padding-right: 30px;
+    padding-top: 80px;
+    padding-bottom: 60px;
+    text-align: center;
+    font-size: 200%;
+    font-stretch: expanded;
+}
+
+/*#idHeader{
+  position: fixed;
+  top: 0;
+  width: 100%
+}*/
+
+#header-left {
+    padding-left: 15px;
+    float: left;
+    text-align: center;
+}
+
+#header-right {
+    padding-right: 15px;
+    float: right;
+    text-align: center;
+}
+
+#header-center {
+    /*overflow: hidden;*/
+    text-align: center;
+}
