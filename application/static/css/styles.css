@@ -1,8 +1,14 @@
-.indent25 {
-    margin-left: 25px;
-}
-
 .codeFont {
     font-family: monospace;
     color: green
+}
+
+body {
+    margin: 0px;
+}
+
+#idDivStage, #idDivStageStatus {
+    padding-left: 15px;
+    padding-right: 15px;
+    background-color: #e8f8ff;
 }

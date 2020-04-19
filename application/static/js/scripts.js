@@ -89,14 +89,25 @@ $(document).ready(function(){
     audio[0].currentTime = 0; //reset time
     audio[0].load(); // reload source
 
-
     
     //Enable stage
     //document.getElementById("idDivStage").style.display = "block";
-    $(document.getElementById("idDivStage")).fadeIn(4000)
+    //$(document.getElementById("idDivStage")).fadeIn(4000)
+    $("#idDivStage").css('opacity', 0);
+    $("#idDivStage").slideDown(2000);
+    $("#idDivStage").animate(
+            {opacity: 1},
+            {queue: false, duration: 2000}
+        );
  }
 
  function collapseStage(){
     //document.getElementById("idDivStage").style.display = "none";
-    $(document.getElementById("idDivStage")).fadeOut(4000)
+    //$(document.getElementById("idDivStage")).fadeOut(4000)
+    $("#idDivStage").css('opacity', 1)
+        .slideUp(2000)
+        .animate(
+            {opacity: 0},
+            {queue: false, duration: 2000}
+        );
  }

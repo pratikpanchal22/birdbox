@@ -7,14 +7,18 @@
     <title>BirdBox</title>
     <meta name="description" content="BirdBox">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="/static/css/styles.css">
+    {{cssInclude|safe}}
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 </head>
 
 <body>
-    <div id="idDivStage" style='display: none;'>
+    <div id="idDivStageStatus" style='display: block; overflow: hidden;'>
         <center>
             <p id="idStageSoundState"></p>
+        </center>
+    </div>
+    <div id="idDivStage" style='display: none; overflow: hidden;'>
+        <center>
             <h2 id="idStageName"></h2> <!-- Name -->
             <img id="idStageImage" src="" alt="Stage Image" width="100%" height="auto">
         </center>
@@ -26,11 +30,12 @@
         <p id="idStageDuration"></p> <!-- Duration -->
         <p id="idStageCredits"></p> <!-- Credits -->
         <center>
-            <hr>
             <p>Listen on this device</p>
             <audio id="idAudio" controls>
                 <source id="idAudioSrcMp3" src="" type="audio/mp3">
             </audio>
+            <br>
+            <hr>
         </center>
     </div>
     

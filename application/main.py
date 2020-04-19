@@ -32,9 +32,11 @@ def index():
     #timeString = now.strftime("%Y-%m-%d %H:%M:%S")
 
     jsInclude = '<script src="/static/js/scripts.js?t='+ts+'"></script>'
+    cssInclude = '<link rel="stylesheet" href="static/css/styles.css?t='+ts+'">'
     
     templateData = {
-        'jsInclude' : jsInclude
+        'jsInclude' : jsInclude,
+        'cssInclude' : cssInclude
     }
     return render_template('index.html', **templateData)
 
