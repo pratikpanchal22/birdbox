@@ -47,7 +47,6 @@ $(document).ready(function(){
         return;
     }
 
-
     if(jsonObj["state"] == "successful"){
         if(stageJsonObj["id"] != jsonObj["id"]){
             stageJsonObj["id"] = jsonObj["id"]
@@ -158,6 +157,11 @@ $(document).ready(function(){
     audio[0].currentTime = 0; //reset time
     audio[0].load(); // reload source
 
+    //Do not enable stage if in settings 
+    if(settingsViewEnabled){
+        return;
+    }
+
     
     //Enable stage
     //document.getElementById("idDivStage").style.display = "block";
@@ -183,4 +187,43 @@ $(document).ready(function(){
 
  function settingsClickHandler(){
     console.log("settings clicked");
+    if(settingsViewEnabled){
+        settingsViewEnabled = false;
+        $("#idDivStageStatus").css(
+            'display','block',
+            'overflow','hidden'
+        );
+        $("#idMainName").css(
+            'display','block',
+            'overflow','hidden'
+        );
+        $("#idDivSettings").css(
+            'display','none',
+            'overflow','hidden'
+        );
+        //remove class - remvoe animation
+        //$(".fa").removeClass("fa-spin");
+    }
+    else {
+        settingsViewEnabled = true;
+        $("#idDivStage").css(
+            'display','none',
+            'overflow','hidden'
+        );
+        $("#idDivStageStatus").css(
+            'display','none',
+            'overflow','hidden'
+        );
+        $("#idMainName").css(
+            'display','none',
+            'overflow','hidden'
+        );
+        $("#idDivSettings").css(
+            'display','block',
+            'overflow','hidden'
+        );
+        //Add class - add animation
+        //$(".fa").addClass("fa-spin");
+        //$("#header-left").css('transform', 'none');
+    }
  }

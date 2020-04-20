@@ -23,25 +23,30 @@ body {
     font-stretch: expanded;
 }
 
-/*#idHeader{
-  position: fixed;
-  top: 0;
-  width: 100%
-}*/
+#idHeader{
+    margin: 0px;
+}
+#idDivHeader{
+    background: rgb(100, 128, 255);
+    overflow: hidden;
+}
 
 #header-left {
     padding-left: 15px;
     float: left;
     text-align: center;
+    vertical-align: middle;
 }
 
 #header-right {
     padding-right: 15px;
     float: right;
     text-align: center;
+    vertical-align: middle;
 }
 
 #header-center {
     /*overflow: hidden;*/
     text-align: center;
+    vertical-align: middle;
 }
