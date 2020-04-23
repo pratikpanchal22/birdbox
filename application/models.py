@@ -11,6 +11,7 @@ class ModelType(Enum):
     IDS_NAMES_AUDIOFILE_SORTED_BY_LAST_UPDATED_OLDEST_FIRST = 3
     FOR_ID_SET_ACTIVE_UPDATE_TS = 4
     FOR_ID_UNSET_ACTIVE = 5
+    UNSET_ACTIVE_FOR_DEAD_ENTRIES = 6
 
 TABLE_NAME = "birdboxTable"
 
@@ -87,7 +88,17 @@ def deactivateRow(db, tableName, candidateRowId):
     cursor.execute(query)
     db.commit()
     cursor.close()
-    return     
+    return
+
+def purgeDeadEntries(db, tableName, seconds):
+    #Query to update date time and set active flag
+    query = "UPDATE "+tableName+" SET active = false WHERE active = true AND UNIX_TIMESTAMP()-UNIX_TIMESTAMP(last_updated)>duration+"+str(seconds)+";"
+    cursor = db.cursor()
+    results = cursor.execute(query)
+    print ("purgeDeadEntries: ", results)
+    db.commit()
+    cursor.close()
+    return results
 
 ##############################################################
 def fetchModel(modelType, *argv):
@@ -102,6 +113,8 @@ def fetchModel(modelType, *argv):
         return updateTsAndActivate(connectToDatabase(), TABLE_NAME, argv[0])
     elif(modelType == ModelType.FOR_ID_UNSET_ACTIVE):
         return deactivateRow(connectToDatabase(), TABLE_NAME, argv[0])    
+    elif(modelType == ModelType.UNSET_ACTIVE_FOR_DEAD_ENTRIES):
+        return purgeDeadEntries(connectToDatabase(), TABLE_NAME, argv[0])        
     else:
         print("[Models] Error! Unknown/unsupported model type: ", modelType)
 

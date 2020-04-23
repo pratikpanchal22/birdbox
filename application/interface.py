@@ -29,11 +29,16 @@ def processMotionTrigger():
     #1. TODO: Verify that not in silent period
     #2. TODO: Verify that required time has passed since last playback
     #2. Verify that no entry is active
+
+    #Purge dead entries
+    
+    #Fetch
     activeEntries = models.fetchModel(models.ModelType.ACTIVE_ENTRIES)
 
     if(len(activeEntries) > 0):
-        if(identifyAndPurgeDeadEntries(activeEntries)):
-            #Refetch activeEntries if purge happened: At this point, they can be considered alive.
+        purged = purgeDeadEntries(60) 
+        print("#################### Number OF ENTRIES PURGED: ",purged)
+        if(purged > 0):
             activeEntries = models.fetchModel(models.ModelType.ACTIVE_ENTRIES)
 
     print ("\n~~~ Active=",len(activeEntries),"  :::  maxAllowed=",maxNumberOfChannels)
@@ -59,10 +64,8 @@ def processMotionTrigger():
     #os.system(osCmd)
     return
 
-def identifyAndPurgeDeadEntries(activeEntries):
-    purgeHappened = False
-    #TODO: Inspect and purge if entries are active beyond their registered duration
-    return purgeHappened
+def purgeDeadEntries(seconds):    
+    return int(models.fetchModel(models.ModelType.UNSET_ACTIVE_FOR_DEAD_ENTRIES, seconds))
 
 def executeAudioFileOnSeparateThread(id, file):
     print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
