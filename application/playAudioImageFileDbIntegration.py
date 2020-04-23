@@ -112,11 +112,12 @@ os.system(osCmd)
 
 #Execute audio file
 #TODO
-osCmd = "mpg321 --gain 100 --verbose " + audioFilePath
-print("[SIMULATED] os.command: ",osCmd)
+basePath = "application/static/sounds/"
+osCmd = "mpg321 --gain 100 --verbose " + basePath + audioFilePath
+print(" os.command: ",osCmd)
 #Simulate for now
-time.sleep(15)
-#os.system(osCmd)
+#time.sleep(15)
+os.system(osCmd)
 
 #mark active = false
 deactivateRow(db, TABLE_NAME, candidateRowId)

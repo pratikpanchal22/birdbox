@@ -92,12 +92,13 @@ print("Audio file to execute: ", audioFilePath)
 updateTsAndActivate(db, TABLE_NAME, candidateRowId)
 
 #Execute audio file
-#TODO
-osCmd = "mpg321 --gain 100 --verbose " + audioFilePath
-print("os.command: ",osCmd)
+print("Called from current working dir: ",os.getcwd())
+basePath = "application/static/sounds/"
+osCmd = "mpg321 --gain 10 --verbose " + basePath + audioFilePath
+print(" os.command: ",osCmd)
 #Simulate for now
-time.sleep(15)
-#os.system(osCmd)
+#time.sleep(15)
+os.system(osCmd)
 
 #mark active = false
 deactivateRow(db, TABLE_NAME, candidateRowId)
