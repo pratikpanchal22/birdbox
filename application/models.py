@@ -31,7 +31,7 @@ def connectToDatabase():
                 #createDatabase(dbConfig.MYSQL_DB)
                 #db = MySQLdb.connect("localhost", "user", "password", "birdbox")
         else:
-            print("Connection to database established")
+            #print("Connection to database established")
             break
 
     query_useDb = "USE "+dbConfig.MYSQL_DB+";"
@@ -64,7 +64,7 @@ def getQueryResultsAsArray(db, tableName, query):
     cursor.execute(query)
     results = list(cursor.fetchall())
     #print ("getQueryResultsAsArray: ",results)
-    print("\ngetQueryResultsAsArray: ")
+    #print("\ngetQueryResultsAsArray: ")
 
     #ids = [item[2] for item in results]
     #print (ids)
@@ -95,7 +95,7 @@ def purgeDeadEntries(db, tableName, seconds):
     query = "UPDATE "+tableName+" SET active = false WHERE active = true AND UNIX_TIMESTAMP()-UNIX_TIMESTAMP(last_updated)>duration+"+str(seconds)+";"
     cursor = db.cursor()
     results = cursor.execute(query)
-    print ("purgeDeadEntries: ", results)
+    #print ("purgeDeadEntries: ", results)
     db.commit()
     cursor.close()
     return results
@@ -107,7 +107,7 @@ def fetchModel(modelType, *argv):
     elif(modelType == ModelType.ID_SORTED_BY_LAST_UPDATED_OLDEST_FIRST):
         return getIdsSortedByLastUpdatedOldestFirst(connectToDatabase(), TABLE_NAME)
     elif(modelType == ModelType.IDS_NAMES_AUDIOFILE_SORTED_BY_LAST_UPDATED_OLDEST_FIRST):
-        query = "SELECT id, name, audio_file, id FROM "+TABLE_NAME+" ORDER BY last_invoked ASC;"
+        query = "SELECT id, name, audio_file FROM "+TABLE_NAME+" ORDER BY last_invoked ASC;"
         return getQueryResultsAsArray(connectToDatabase(), TABLE_NAME, query)
     elif(modelType == ModelType.FOR_ID_SET_ACTIVE_UPDATE_TS):
         return updateTsAndActivate(connectToDatabase(), TABLE_NAME, argv[0])

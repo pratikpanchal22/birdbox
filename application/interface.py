@@ -4,6 +4,7 @@ import models as models
 from enum import Enum
 from threading import Thread
 import inspect
+from utilities import logger
 
 #TRIGGER TYPES
 class TriggerType(Enum):
@@ -17,33 +18,33 @@ class CandidateSelectionModels(Enum):
 
 #GLOBALS - TODO: Move to persistent storage
 randomizeNumberOfChannels = True #TODO: get this from settings
-maxNumberOfChannels = 5 #TODO: get this from settings
-limitToSameSpecies = True #TODO: get this from settings    
+maxNumberOfChannels = 5          #TODO: get this from settings
+limitToSameSpecies = False       #TODO: get this from settings   
+maxVolumeMotionTrigger = 20      #TODO: get this from settings   
 
 def processMotionTrigger():
-    print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
+    #print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
+    
     #TODO: Right now don't see any need to push motion events in db. So skipping. 
     #But if required, this will be the place to do so. 
 
     #Validations
     #1. TODO: Verify that not in silent period
     #2. TODO: Verify that required time has passed since last playback
-    #2. Verify that no entry is active
-
-    #Purge dead entries
     
+    #Purge dead entries
     #Fetch
     activeEntries = models.fetchModel(models.ModelType.ACTIVE_ENTRIES)
 
     if(len(activeEntries) > 0):
-        purged = purgeDeadEntries(60) 
-        print("#################### Number OF ENTRIES PURGED: ",purged)
+        purged = purgeDeadEntries(60)
         if(purged > 0):
+            logger("_INFO_", purged, "entries purged")
             activeEntries = models.fetchModel(models.ModelType.ACTIVE_ENTRIES)
 
-    print ("\n~~~ Active=",len(activeEntries),"  :::  maxAllowed=",maxNumberOfChannels)
+    logger("_INFO_", "Active/maxAllowed=", len(activeEntries), "/", maxNumberOfChannels)
     if(len(activeEntries) >= maxNumberOfChannels):
-        print ("Ignoring trigger.")
+        logger ("_INFO_", "Ignoring trigger. Exiting\n")
         return
 
     numberOfChannels = 1
@@ -54,9 +55,10 @@ def processMotionTrigger():
 
     candidates = getCandidateAudioFiles(CandidateSelectionModels.RNDM_TOP_75PC, numberOfChannels)
     
-    print("Candidate audio files:")
+    #print("Candidate audio files:")
+    logger("_INFO", "\nFINAL CANDIDATES. Requesting:")
     for c in candidates:
-        print ("\n~~~Requesting: ",c[2], " id=",c[0])
+        logger("_INFO_", "{:>4.4} {:32.32} {}".format(str(c[0]),c[1],c[2]))
         Thread(target=executeAudioFileOnSeparateThread, args=[c[0], c[2]]).start()
 
     #osCmd = "python3 application/playAudioFileDbIntegration.py"
@@ -68,26 +70,26 @@ def purgeDeadEntries(seconds):
     return int(models.fetchModel(models.ModelType.UNSET_ACTIVE_FOR_DEAD_ENTRIES, seconds))
 
 def executeAudioFileOnSeparateThread(id, file):
-    print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
+    #print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
     #Use Id to mark entry as active
     models.fetchModel(models.ModelType.FOR_ID_SET_ACTIVE_UPDATE_TS, id)
-    print("\nId: ",id, " marked as active")
+    #logger("Id: ",id, " marked as active")
 
     #Run audio file
-    #audioCmd = "mpg321 --gain 10 --verbose "
-    audioCmd = "mpg321 --gain 20 "
-    basePath = "application/static/sounds/"
+    #audioCmd = "mpg321 --gain 10 --verbose --quiet"
+    audioCmd = "mpg321 --gain "+str(maxVolumeMotionTrigger)+" --quiet"
+    basePath = " application/static/sounds/"
     osCmd = audioCmd + basePath + file
-    print(" os.command: ",osCmd)
+    #logger("_INFO_","os.command: ",osCmd)
     os.system(osCmd)
     
     #Use Id to mark entry as inactive
     models.fetchModel(models.ModelType.FOR_ID_UNSET_ACTIVE, id)
-    print("#### end of executeAudioFileOnSeparateThread for ", file)
+    logger("_INFO_", "End of executeAudioFileOnSeparateThread for ", file, "id=", id)
     return    
 
 def getCandidateAudioFiles(modelType, numberOfChannels):
-    print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
+    #print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
     if(numberOfChannels == 0):
         return
     
@@ -100,45 +102,54 @@ def getCandidateAudioFiles(modelType, numberOfChannels):
     #    print(d[0])
     #    print(d[1])
 
-    print("Length: ",len(data))    
+    logger("_INFO_", "Total data rows: ",len(data))
+    allIds = [i[0] for i in data]    
+    logger("_INFO_", allIds)
     eligibleLength = int(0.75 * len(data))
     candidates = []
     candidates.append(data[random.randint(0, eligibleLength-1)])
+    logger("_INFO_", "CHOOSING 1st candidate:")
+    logger("_INFO_", "{:>4.4} {:32.32} {}".format(str(candidates[0][0]),candidates[0][1],candidates[0][2]))
     data.remove(candidates[0])
 
-    print("Number of channels to implement: ", numberOfChannels)
+    #Remove last 25%
+    indicesToRemove = len(data) - eligibleLength
+    for i in range(0, indicesToRemove):
+        data.remove(data[len(data)-1])
 
-    speciesConstrainedSet = []
-    #speciesConstrainedSet.append(candidates[0])
-    if(limitToSameSpecies):
-        for d in data:
-            if(d == candidates[0]):
-                print(d," already exists. Skipping")
-                #data.remove(candidates[0])
-                continue
-            elif(d[1] == candidates[0][1]):
-                speciesConstrainedSet.append(d)
-        data = speciesConstrainedSet
-
-    #At this point data is a curated set that does not contain the cadidates[0]
-    print("Species constrained set: ", speciesConstrainedSet)
-    print("Size of species constrained set: ", len(speciesConstrainedSet))
+    logger("_INFO_", "Total number of channels to implement: ", numberOfChannels)
 
     if(numberOfChannels > 1):
+        speciesConstrainedSet = []
+        logger("INFO_", "Limit to same species: ", limitToSameSpecies)
+        if(limitToSameSpecies):
+            for d in data:
+                if(d == candidates[0]):
+                    print(d," :Already exists. Skipping")
+                    #data.remove(candidates[0])
+                    continue
+                elif(d[1] == candidates[0][1]):
+                    speciesConstrainedSet.append(d)
+            data = speciesConstrainedSet
+
+        logger("_INFO_", "Curated candidate data set: size=",len(data))
+        for element in data:
+            logger("_INFO_", "{:>4.4} {:32.32} {}".format(str(element[0]),element[1],element[2]))
+    
         if(numberOfChannels > len(data)):
-            print("Number of channels is more than data set at hand")
+            logger("_INFO_", "Number of channels is more than data set at hand")
             for d in data:
                 candidates.append(d)
         else:
             for i in range(0, numberOfChannels-1):
-                print("\n Selecting channel: ",i+1)
+                logger("_INFO_", "\nSelecting For channel ",i+2)
                 randomlyChosenRowIdx = random.randint(0,len(data)-1)
-                print("Size of data: ",len(data), "  Chosen idx: ",randomlyChosenRowIdx)
+                logger("_INFO_", "Size of data:",len(data), "  Chosen idx:",randomlyChosenRowIdx, "id={} {} {}".format(str(data[randomlyChosenRowIdx][0]),data[randomlyChosenRowIdx][1],data[randomlyChosenRowIdx][2]))
                 candidates.append(data[randomlyChosenRowIdx])
                 #remove that row to avoid duplication
                 data.remove(data[randomlyChosenRowIdx])
 
-    print ("Final candidate list: ")
+    #logger("_INFO_", "Final candidate list: ")
     #candidateAudioFiles = []
     #for c in candidates:
     #    print (c)
@@ -146,17 +157,11 @@ def getCandidateAudioFiles(modelType, numberOfChannels):
     
     return candidates
 
-def playAudioFile(fileName):
-    #Scope 
-    # 1. Mark as active
-    # 2. play file (threaded call)
-    # 3. 
-    return
-
-
+####################################################################################
 def processTrigger(triggerType):
-    print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
-    print("@processTrigger: ",triggerType)
+    #logger("_INFO_", "\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
+    #print("@processTrigger: ",triggerType)
+    logger("_INFO_", "Trigger type:", triggerType)
     if(triggerType == TriggerType.MOTION):
         processMotionTrigger()
     elif(triggerType == TriggerType.ON_DEMAND):
