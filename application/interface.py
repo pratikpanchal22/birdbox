@@ -2,7 +2,7 @@ import os
 import random
 import models as models
 from enum import Enum
-from threading import Thread
+from threading import Thread, current_thread
 import inspect
 from utilities import logger
 
@@ -57,13 +57,23 @@ def processMotionTrigger():
     
     #print("Candidate audio files:")
     logger("_INFO", "\nFINAL CANDIDATES. Requesting:")
+    threads = []
     for c in candidates:
         logger("_INFO_", "{:>4.4} {:32.32} {}".format(str(c[0]),c[1],c[2]))
-        Thread(target=executeAudioFileOnSeparateThread, args=[c[0], c[2]]).start()
+        t = Thread(target=executeAudioFileOnSeparateThread, args=[c[0], c[2]])
+        t.name = "thread_id_"+str(c[0])
+        threads.append(t)
 
-    #osCmd = "python3 application/playAudioFileDbIntegration.py"
-    #print("Invoking: ",osCmd)
-    #os.system(osCmd)
+    #Start threads
+    for t in threads:
+        t.start()    
+        logger("_INFO_", " {} {:<10} {} {:<10}".format("Thread: ", str(t.name), "Status: ", str(t.isAlive())))
+
+    #Wait on threads
+    for t in threads:
+        t.join()
+
+    logger("_INFO_", "{} {}".format("ALL CHILD THREADS COMPLETED: for parent thread: ", str(current_thread().name)))    
     return
 
 def purgeDeadEntries(seconds):    

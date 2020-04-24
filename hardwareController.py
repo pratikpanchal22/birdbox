@@ -1,6 +1,7 @@
 import RPi.GPIO as GPIO
 import datetime, time
 from threading import Thread
+from application.utilities import logger
 
 import sys
 sys.path.append('application/')
@@ -11,17 +12,20 @@ import interface as interface
 def gpio18_callback(channel):
     ts = datetime.datetime.now()
     input_value = GPIO.input(18)
-    print("\nGPIO18: ", input_value,"Motion detected at ",ts)
+    logger("_INFO_", "\nGPIO18: ", input_value,"Motion detected at ",ts)
     #interface.processTrigger(interface.TriggerType.MOTION)
-    Thread(target=interface.processTrigger, args=[(interface.TriggerType.MOTION)]).start()
+    t = Thread(target=interface.processTrigger, args=[(interface.TriggerType.MOTION)])
+    t.name = "thread_motion_"+str(ts)
+    t.start()
+    logger("_INFO_", "Thread: ", t.name, "started")
 
 def gpio17_callback(channel):
     input_value = GPIO.input(17)
-    print("GPIO17: ", input_value)
+    logger("_INFO_", "GPIO17: ", input_value)
 
 ##############   MAIN   ##############
 def main():
-    print("GPIO version: ", GPIO.VERSION)
+    logger("_INFO_", "GPIO version: ", GPIO.VERSION)
 
     #Set pin numbering reference mode
     GPIO.setmode(GPIO.BCM)
@@ -34,13 +38,13 @@ def main():
     GPIO.add_event_detect(18, GPIO.RISING, callback=gpio18_callback, bouncetime=1000)
 
     try:
-        print("Setup complete. Waiting for interrupts")
+        logger("_INFO_", "Setup complete. Waiting for interrupts")
         while True:
             time.sleep(100)
             #continue
 
     except KeyboardInterrupt:
-        print("...Terminating")
+        logger("_INFO_", "...Terminating")
         pass
         #GPIO.cleanup()
     #GPIO.cleanup()
