@@ -1,19 +1,16 @@
 from flask import Flask, render_template, jsonify, request
-#import fetchAllData
 from flask_mysqldb import MySQL
 import os
-#import MySQLdb
-
-#import mysql.connector as connector
+import dbConfig
 import datetime
 import time
 
 app = Flask(__name__)
 
-app.config['MYSQL_USER'] = 'user'
-app.config['MYSQL_PASSWORD'] = 'password'
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_DB'] = 'birdbox'
+app.config['MYSQL_USER'] = dbConfig.MYSQL_USER
+app.config['MYSQL_PASSWORD'] = dbConfig.MYSQL_PASSWORD
+app.config['MYSQL_HOST'] = dbConfig.MYSQL_HOST
+app.config['MYSQL_DB'] = dbConfig.MYSQL_DB
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 mysql = MySQL(app)
