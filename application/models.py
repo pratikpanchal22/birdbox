@@ -1,7 +1,8 @@
 import datetime, time
 import random
 import MySQLdb
-import dbConfig
+import MySQLdb.cursors
+import dbConfig as dbc
 from enum import Enum
 
 #MODEL TYPES
@@ -20,7 +21,11 @@ def connectToDatabase():
     db = ''
     for attempt in range(1):
         try:
-            db = MySQLdb.connect(dbConfig.MYSQL_HOST, dbConfig.MYSQL_USER, dbConfig.MYSQL_PASSWORD, dbConfig.MYSQL_DB)
+            db = MySQLdb.connect(dbc.MYSQL_HOST, 
+                                 dbc.MYSQL_USER, 
+                                 dbc.MYSQL_PASSWORD, 
+                                 dbc.MYSQL_DB,
+                                 cursorclass=MySQLdb.cursors.DictCursor)
         except MySQLdb._exceptions.OperationalError as err:
             print("Something went wrong: {}".format(err))
             print("Error code: ", err.args[0])
@@ -34,7 +39,7 @@ def connectToDatabase():
             #print("Connection to database established")
             break
 
-    query_useDb = "USE "+dbConfig.MYSQL_DB+";"
+    query_useDb = "USE "+dbc.MYSQL_DB+";"
     cursor = db.cursor()
     cursor.execute(query_useDb)
     cursor.close()
@@ -42,79 +47,55 @@ def connectToDatabase():
 
 def getActiveEntriesFromDb(db, tableName):
     #Query to get all active rows
-    query = "SELECT id FROM "+tableName+" WHERE active = true;"
+    query = "SELECT "+dbc.KEY_ID+" FROM "+tableName+" WHERE "+dbc.KEY_ACTIVE+" = true;"
     cursor = db.cursor()
     cursor.execute(query)
-    results = [item[0] for item in cursor.fetchall()]
+    results = cursor.fetchall()
     cursor.close()
     return results
 
-def getIdsSortedByLastUpdatedOldestFirst(db, tableName):
-    #Query to get all rows sorted by last_invoked ascending (oldest first) 
-    query = "SELECT id FROM "+tableName+" ORDER BY last_invoked ASC;"
+def getQueryResultsAsList(db, tableName, query):
     cursor = db.cursor()
     cursor.execute(query)
-    #List comprehensions
-    ids = [item[0] for item in cursor.fetchall()]
+    results = cursor.fetchall()
     cursor.close()
-    return ids
+    return list(results)
 
-def getQueryResultsAsArray(db, tableName, query):
-    cursor = db.cursor()
-    cursor.execute(query)
-    results = list(cursor.fetchall())
-    #print ("getQueryResultsAsArray: ",results)
-    #print("\ngetQueryResultsAsArray: ")
+##################################################
+####### Models that require db.commit ############
+##################################################
 
-    #ids = [item[2] for item in results]
-    #print (ids)
-
-    cursor.close()
-    return results        
-
-def updateTsAndActivate(db, tableName, candidateRowId):
-    #Query to update date time and set active flag
-    query = "UPDATE "+tableName+" SET last_invoked = now(), active = true WHERE id = "+str(candidateRowId)+";"
-    cursor = db.cursor()
-    cursor.execute(query)
-    db.commit()
-    cursor.close()
-    return
-
-def deactivateRow(db, tableName, candidateRowId):
-    #Query to update date time and set active flag
-    query = "UPDATE "+tableName+" SET active = false WHERE id = "+str(candidateRowId)+";"
-    cursor = db.cursor()
-    cursor.execute(query)
-    db.commit()
-    cursor.close()
-    return
-
-def purgeDeadEntries(db, tableName, seconds):
-    #Query to update date time and set active flag
-    query = "UPDATE "+tableName+" SET active = false WHERE active = true AND UNIX_TIMESTAMP()-UNIX_TIMESTAMP(last_updated)>duration+"+str(seconds)+";"
+def performDbOperation(db, tableName, query):
     cursor = db.cursor()
     results = cursor.execute(query)
-    #print ("purgeDeadEntries: ", results)
     db.commit()
     cursor.close()
-    return results
+    return results 
 
 ##############################################################
 def fetchModel(modelType, *argv):
+
+    dbConnection = connectToDatabase()
+
     if(modelType == ModelType.ACTIVE_ENTRIES):
-        return getActiveEntriesFromDb(connectToDatabase(), TABLE_NAME)
-    elif(modelType == ModelType.ID_SORTED_BY_LAST_UPDATED_OLDEST_FIRST):
-        return getIdsSortedByLastUpdatedOldestFirst(connectToDatabase(), TABLE_NAME)
+        return getActiveEntriesFromDb(dbConnection, TABLE_NAME)
+    
     elif(modelType == ModelType.IDS_NAMES_AUDIOFILE_SORTED_BY_LAST_UPDATED_OLDEST_FIRST):
-        query = "SELECT id, name, audio_file FROM "+TABLE_NAME+" ORDER BY last_invoked ASC;"
-        return getQueryResultsAsArray(connectToDatabase(), TABLE_NAME, query)
+        query = "SELECT "+dbc.KEY_ID+", "+dbc.KEY_NAME+", "+dbc.KEY_AUDIO_FILE+" FROM "+TABLE_NAME+" ORDER BY "+dbc.KEY_LAST_INVOKED+" ASC;"
+        return getQueryResultsAsList(dbConnection, TABLE_NAME, query)
+    
     elif(modelType == ModelType.FOR_ID_SET_ACTIVE_UPDATE_TS):
-        return updateTsAndActivate(connectToDatabase(), TABLE_NAME, argv[0])
-    elif(modelType == ModelType.FOR_ID_UNSET_ACTIVE):
-        return deactivateRow(connectToDatabase(), TABLE_NAME, argv[0])    
+        query = "UPDATE "+TABLE_NAME+" SET "+dbc.KEY_LAST_INVOKED+" = now(), "+dbc.KEY_ACTIVE+" = true WHERE "+dbc.KEY_ID+" = "+str(argv[0])+";"
+        return performDbOperation(dbConnection, TABLE_NAME, query)
+    
+    elif(modelType == ModelType.FOR_ID_UNSET_ACTIVE):   
+        query = "UPDATE "+TABLE_NAME+" SET "+dbc.KEY_ACTIVE+" = false WHERE "+dbc.KEY_ID+" = "+str(argv[0])+";"
+        return performDbOperation(dbConnection, TABLE_NAME, query)
+    
     elif(modelType == ModelType.UNSET_ACTIVE_FOR_DEAD_ENTRIES):
-        return purgeDeadEntries(connectToDatabase(), TABLE_NAME, argv[0])        
+        query = query = "UPDATE "+TABLE_NAME+" SET "+dbc.KEY_ACTIVE+" = false WHERE "+dbc.KEY_ACTIVE+" = true AND UNIX_TIMESTAMP()-UNIX_TIMESTAMP("+dbc.KEY_LAST_UPDATED+")>duration+"+str(argv[0])+";"
+        return performDbOperation(dbConnection, TABLE_NAME, query)
+    
     else:
         print("[Models] Error! Unknown/unsupported model type: ", modelType)
 
