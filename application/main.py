@@ -1,20 +1,23 @@
 from flask import Flask, render_template, jsonify, request
 from flask_mysqldb import MySQL
 import os
-import dbConfig
+from threading import Thread
+import dbConfig as dbc
 import datetime
 import time
+import interface as interface
 
 app = Flask(__name__)
 
-app.config['MYSQL_USER'] = dbConfig.MYSQL_USER
-app.config['MYSQL_PASSWORD'] = dbConfig.MYSQL_PASSWORD
-app.config['MYSQL_HOST'] = dbConfig.MYSQL_HOST
-app.config['MYSQL_DB'] = dbConfig.MYSQL_DB
+app.config['MYSQL_USER'] = dbc.MYSQL_USER
+app.config['MYSQL_PASSWORD'] = dbc.MYSQL_PASSWORD
+app.config['MYSQL_HOST'] = dbc.MYSQL_HOST
+app.config['MYSQL_DB'] = dbc.MYSQL_DB
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 mysql = MySQL(app)
 
+#################### App Models #######################
 def fetchOnStageMetadata():
     cursor = mysql.connection.cursor()
     tableName = 'birdboxTable'
@@ -22,6 +25,7 @@ def fetchOnStageMetadata():
     cursor.execute(query)
     return cursor.fetchall()
 
+#################### App Routes ########################
 @app.route("/")
 def index():
     now = datetime.datetime.now()
