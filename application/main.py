@@ -46,16 +46,14 @@ def onDemand():
     now = datetime.datetime.now()
     ts = str(int(time.time()))
 
-    osCmd = "python3 playAudioFileDbIntegration.py"
-    print("Invoking onDemand: ",osCmd)
+    t = Thread(target=interface.processTrigger, args=[(interface.TriggerType.ON_DEMAND)])
+    t.name = "thread_motion_"+str(ts)
+    t.start()
 
     response = {
-        "osCmd":osCmd,
         "state":"successful",
         "ts": ts
     }
-
-    os.system(osCmd)
 
     return jsonify(response)
 
