@@ -1,6 +1,7 @@
 //Globals
-stageJsonObj = {};
+stageElements = [];
 settingsViewEnabled = false;
+stageIsHidden = true;
 
 $(document).ready(function(){
     if (!jQuery) {  
@@ -14,12 +15,17 @@ $(document).ready(function(){
  });
 
  function initializations(){
-     stageJsonObj = {"id":-1};
+    stageElements = [];
+    stageIsHidden = true;
 
      //click handlers
      $("#header-left").click(function(){
         settingsClickHandler();
      });
+     
+     $("#idDivStage").on("click", ".childDiv", function(){
+         console.log("###*** childDiv clicked: " + $(this).attr("id"));
+     })
      return;
  }
 
@@ -30,14 +36,30 @@ $(document).ready(function(){
          setTimeout('getOnStageMetadata()', 2000);
      });
  }
+
+ function isSameAsStageElements(obj){
+    if(stageElements.length != obj.length){
+        return false
+    }
+
+    for(var i=0; i<obj.length; i++){
+        if(!stageElements.includes(obj[i])){
+            return false;
+        }
+    }
+
+    return true;
+ }
  
  function processStage(jsonObj){
+    //console.log("received data: " +jsonObj);
     //Indicator
     updateStatusIndicator()
 
     localTs = Math.floor(Date.now() / 1000);
     remoteTs = parseInt(jsonObj["ts"]);
     diff = localTs - remoteTs;
+
     console.log("Local: "+Math.floor(Date.now() / 1000)
         +"  Remote: "+jsonObj["ts"]
         +"  Difference: "+diff);
@@ -48,13 +70,32 @@ $(document).ready(function(){
     }
 
     if(jsonObj["state"] == "successful"){
-        if(stageJsonObj["id"] != jsonObj["id"]){
-            stageJsonObj["id"] = jsonObj["id"]
-            console.log("Updating stage with new id="+stageJsonObj["id"])
-            updateStage(jsonObj)
+        console.log(jsonObj["data"])
+        obj = JSON.parse(jsonObj["data"]);
+        console.log("Number of entries: " + Object.keys(obj).length)
+
+        if(isSameAsStageElements(obj)){
+            console.log("Stage is in sync with " + obj);
         }
         else {
-            console.log("Stage is in sync with id="+stageJsonObj["id"])
+            console.log(">>> Updating stage " + obj);
+            stageElements = obj;
+            searchIds = "?id="
+            for(var i=0; i<stageElements.length; i++){
+                searchIds += stageElements[i] + ",";
+            }
+            searchIds = searchIds.substring(0, searchIds.length-1);
+            console.log(searchIds);
+
+            searchUrl = "idData.json" + searchIds + "&t=" + Math.floor(Date.now()/1000);
+
+            //Get information on all ids
+            $.getJSON(searchUrl, function(result){
+                updateStage(result);       
+            }).done(function(){
+                
+            });
+                    
         }
     }
     else if(jsonObj["state"] == "empty"){
@@ -62,7 +103,7 @@ $(document).ready(function(){
         collapseStage();
         //change: 'you are listening to' to 'you heard'
         //document.getElementById('idStageSoundState').innerHTML = "You were listening to";
-        $('#idStageSoundState').text("You were listening to");
+        $('#idStageSoundState').text("No birds active right now");
     }
     else {
         console.log("Error: State: " + jsonObj["state"])
@@ -119,11 +160,100 @@ $(document).ready(function(){
     $("#header-right").html(newVal);
  }
 
- function updateStage(jsonObj){
+ function updateStage(data){
+    //console.log(data);
 
+    if(data["state"] != "successful"){
+        console.log("data.state != successful.")
+        return;
+    }
+
+    obj = JSON.parse(data["data"]); 
+    console.log("Size of data: " + obj.length);
+    //console.log("Data: " + JSON.stringify(obj));
+    
     //SoundState
-    //document.getElementById('idStageSoundState').innerHTML = "You are listening to";
-    $('#idStageSoundState').text("You are listening to");
+    if(obj.length > 1){
+        $('#idStageSoundState').text("You are listening to a "+obj.length+"-bird symphony");
+    }
+    else {
+        $('#idStageSoundState').text("You are listening to a");
+    }
+
+
+    //Remove all current childDivs
+    //$("#idDivStage").empty();
+    //Remove child divs that no longer exist in stageElements
+    $("#idDivStage").children().each(function(){
+        stageChildDiv = $(this).attr("id");
+
+        if(stageChildDiv === undefined){
+            
+        }
+        else {
+            id = Number(stageChildDiv.substring(10, stageChildDiv.length));
+
+            console.log("Removing: " + stageChildDiv);
+            if(!stageElements.includes(id)){
+                //remove
+                $('#'+stageChildDiv).css('opacity', 1)
+                    .slideUp(1000)
+                    .animate(
+                        {opacity: 0},
+                        {queue: false, duration: 1000},
+                        function(){
+                            $('#'+stageChildDiv).remove();
+                        }
+                    );                
+            }
+        }
+    });
+
+    //Add all new ones
+    for(var i=0; i<obj.length; i++){
+
+        //console.log("stringify obj: " + JSON.stringify(obj[i]));
+        var o = obj[i];
+        //console.log("stringify o: " + JSON.stringify(o));
+
+        //if element is already on the list, skip
+        if($('#idChildDiv'+String(o.id)).length){
+            console.log("Child div " + o.id + " exists! Skipping");
+            continue;
+        }
+
+        console.log("\nAdding child div for idx:" + o.id);
+
+        var divId = "idChildDiv" + String(o.id);
+        var nameId = "idChildName" + String(o.id);
+        var imageId = "idChildImage" + String(o.id);
+        childDiv = '<div id="'+divId+'" class="childDiv" style="display: none;"><center>'+
+                    '<h3 id="'+nameId+'">'+o.name+'</h3>'+ 
+                    '<img id="'+imageId+'" src="static/images/'+o.image_file+'" alt="Stage Image" width="100%" height="auto">'+
+                    '<br/><br/>'
+                    '</center></div>';
+
+        /*$("#idDivStage").append(childDiv).animate(
+            {opacity: 1},
+            {queue: false, duration: 1000}
+        );*/
+        $(childDiv).appendTo($('#idDivStage')).slideDown(1000);
+    }
+
+    if(stageIsHidden){
+        stageIsHidden = false;
+        //Enable stage
+        //document.getElementById("idDivStage").style.display = "block";
+        //$(document.getElementById("idDivStage")).fadeIn(4000)
+        $("#idDivStage").css('opacity', 0);
+        $("#idDivStage").slideDown(1000);
+        $("#idDivStage").animate(
+                {opacity: 1},
+                {queue: false, duration: 1000}
+            );
+    }
+    return;
+    
 
     //Name 
     document.getElementById('idStageName').innerHTML = jsonObj["name"];
@@ -161,17 +291,6 @@ $(document).ready(function(){
     if(settingsViewEnabled){
         return;
     }
-
-    
-    //Enable stage
-    //document.getElementById("idDivStage").style.display = "block";
-    //$(document.getElementById("idDivStage")).fadeIn(4000)
-    $("#idDivStage").css('opacity', 0);
-    $("#idDivStage").slideDown(2000);
-    $("#idDivStage").animate(
-            {opacity: 1},
-            {queue: false, duration: 2000}
-        );
  }
 
  function collapseStage(){
@@ -183,6 +302,8 @@ $(document).ready(function(){
             {opacity: 0},
             {queue: false, duration: 2000}
         );
+    
+    stageIsHidden = true;
  }
 
  function settingsClickHandler(){
