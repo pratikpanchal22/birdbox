@@ -193,17 +193,21 @@ $(document).ready(function(){
         else {
             id = Number(stageChildDiv.substring(10, stageChildDiv.length));
 
-            console.log("Removing: " + stageChildDiv);
             if(!stageElements.includes(id)){
                 //remove
+                console.log("Removing: " + stageChildDiv);
+
+                if($('#'+stageChildDiv).css('opacity') == 0){
+                    //remove immediately
+                    console.log("******** Removing " + stageChildDiv + " immediately")
+                    $(this).remove();
+                }
+
                 $('#'+stageChildDiv).css('opacity', 1)
                     .slideUp(1000)
                     .animate(
                         {opacity: 0},
-                        {queue: false, duration: 1000},
-                        function(){
-                            $('#'+stageChildDiv).remove();
-                        }
+                        {queue: false, duration: 1000}
                     );                
             }
         }
