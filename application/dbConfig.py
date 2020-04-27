@@ -3,6 +3,9 @@ MYSQL_PASSWORD = 'password'
 MYSQL_HOST = 'localhost'
 MYSQL_DB = 'birdbox'
 
+## Data Tables
+TABLE_PRIMARY = 'birdBoxTable'
+
 ## Data access keys (column names)
 KEY_ID = 'id'
 KEY_LAST_UPDATED = 'last_updated'

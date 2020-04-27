@@ -5,6 +5,8 @@ from threading import Thread
 import dbConfig as dbc
 import datetime
 import time
+import json
+from json import JSONEncoder
 import interface as interface
 
 app = Flask(__name__)
@@ -17,13 +19,27 @@ app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 mysql = MySQL(app)
 
+# subclass JSONEncoder
+class DateTimeEncoder(JSONEncoder):
+        #Override the default method
+        def default(self, obj):
+            if isinstance(obj, (datetime.date, datetime.datetime)):
+                return obj.isoformat()
+
 #################### App Models #######################
+def fetchActiveEntries():
+    cursor = mysql.connection.cursor()
+    query = "SELECT "+dbc.KEY_ID+" FROM birdboxTable where "+dbc.KEY_ACTIVE+" = true;"
+    cursor.execute(query)
+    return list(cursor.fetchall())
+
 def fetchOnStageMetadata():
     cursor = mysql.connection.cursor()
-    tableName = 'birdboxTable'
-    query = "SELECT * FROM "+tableName+" where active = true;"
+    query = "SELECT "+dbc.KEY_ID+", "+dbc.KEY_NAME+", "+dbc.KEY_AUDIO_FILE+", "+dbc.KEY_AUDIO_TYPE+", "+dbc.KEY_DESCRIPTION+", "+dbc.KEY_DURATION+", "+dbc.KEY_CREDIT+", "+dbc.KEY_DATE_CREATED_OR_CAPTURED+", "+dbc.KEY_IMAGE_FILE+", "+dbc.KEY_IMAGE_DESC+", "+dbc.KEY_LOCATION+", "+dbc.KEY_URL+" "+" FROM birdboxTable where "+dbc.KEY_ACTIVE+" = true;"
     cursor.execute(query)
-    return cursor.fetchall()
+    return list(cursor.fetchall())
+
+
 
 #################### App Routes ########################
 @app.route("/")
@@ -66,40 +82,61 @@ def onStage():
 
     print("local ts=",ts," t=",t," diff=",int(ts)-int(t))
 
-    json = {
+    jsonObj = {
         "state":"unknown",
         "ts":ts
     }
 
     if(int(ts) - int(t) > 2):
         #Request too old
-        json["state"] = "request too old"
-        print("Rejecting request because it is too old", json)
-        return jsonify(json)
+        jsonObj["state"] = "request too old"
+        print("Rejecting request because it is too old", jsonObj)
+        return jsonify(jsonObj)
+
+    entries = fetchActiveEntries()
+    print("\n\nfetchActiveEntries: Converting entries to JSON:")
+    entries = [e['id'] for e in entries]
+    print(json.dumps(entries))
+
+    if(len(entries)==0):
+        jsonObj["state"] = "empty"
+    else:
+        jsonObj["state"] = "successful"
+        jsonObj["data"] = json.dumps(entries)
+        
+    return json.dumps(jsonObj)
+
+@app.route("/idData.json")
+def idData():
+    now = datetime.datetime.now()
+    ts = str(int(time.time()))
+    
+    t = request.args.get("t")
+
+    print("local ts=",ts," t=",t," diff=",int(ts)-int(t))
+
+    jsonObj = {
+        "state":"unknown",
+        "ts":ts
+    }
+
+    if(int(ts) - int(t) > 2):
+        #Request too old
+        jsonObj["state"] = "request too old"
+        print("Rejecting request because it is too old", jsonObj)
+        return jsonify(jsonObj)
 
     entries = fetchOnStageMetadata()
+    print("\n\nConverting entries to JSON:")
+    print(json.dumps(entries, cls=DateTimeEncoder))
 
-    if(len(entries)==1):
-        json["state"] = "successful"
-        e = entries[0]
-        json["id"] = e["id"]
-        json["name"] = e["name"]
-        json["audio_file"] = e["audio_file"]
-        json["audio_type"] = e["audio_type"]
-        json["description"] = e["description"]
-        json["duration"] = e["duration"]
-        json["credit"] = e["credit"]
-        json["date_created_or_captured"] = e["date_created_or_captured"]
-        json["image_file"] = e["image_file"]
-        json["image_desc"] = e["image_desc"]
-        json["location"] = e["location"]
-        json["url"] = e["url"]
-    elif(len(entries)==0):
-        json["state"] = "empty"
+    if(len(entries)==0):
+        jsonObj["state"] = "empty"
     else:
-        json["state"] = "multiple_entries"+str(len(entries))   
-        
-    return jsonify(json)
+        jsonObj["state"] = "successful"
+        jsonObj["data"] = json.dumps(entries, cls=DateTimeEncoder)
+
+    return json.dumps(jsonObj)
 
 @app.route("/temps")
 def temps():
