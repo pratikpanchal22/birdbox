@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block content %}
+
+
+    <div class="container">
+
+        <center>
+            <h2 id="idStageName">{{name}}</h2>
+            <img id="idStageImage" src="static/images/{{ image_file }}" alt="{{ name }}" width="100%" height="auto">
+        </center>
+
+        <h6 id="idStageImageDesc">{{image_desc}}</h6>
+        <p id="idStageAudioDesc">{{description}}</p>
+
+        <center>
+            <br>
+            <h6>Listen on this device</h6>
+            <audio id="idAudio" controls>
+                <source id="idAudioSrcMp3" src="static/sounds/{{ audio_file }}" type="audio/mp3">
+            </audio>
+        </center>
+
+        <br>
+        <p id="idStageAudioType">Type: {{audio_type}}</p>
+        <p id="idStageLocation">Location: {{location}}</p>
+        <p id="idStageDuration">Duration: {{duration}} seconds</p>
+        <p id="idStageCredits">Credits: {{credit}}, <a href="{{url}}">NPS</a></p>
+        <br><br>
+
+        <center>
+            <div>
+                <button class="button" id="idBackToHomeButton" style="width: 75%;">Back to Home</button>
+            </div>
+        </center>
+    </div>
+
+{% endblock %}    

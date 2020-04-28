@@ -24,7 +24,11 @@ $(document).ready(function(){
      });
      
      $("#idDivStage").on("click", ".childDiv", function(){
-         console.log("###*** childDiv clicked: " + $(this).attr("id"));
+        stageChildDiv = $(this).attr("id");
+        console.log("###*** childDiv clicked: " + stageChildDiv);
+        id = Number(stageChildDiv.substring(10, stageChildDiv.length));
+
+        window.location.href='infoPage.html?id='+id;
      })
      return;
  }
@@ -234,6 +238,7 @@ $(document).ready(function(){
         childDiv = '<div id="'+divId+'" class="childDiv" style="display: none;"><center>'+
                     '<h3 id="'+nameId+'">'+o.name+'</h3>'+ 
                     '<img id="'+imageId+'" src="static/images/'+o.image_file+'" alt="Stage Image" width="100%" height="auto">'+
+                    '<i>(tap for more)</i>'+
                     '<br/><br/>'
                     '</center></div>';
 
@@ -250,51 +255,13 @@ $(document).ready(function(){
         //document.getElementById("idDivStage").style.display = "block";
         //$(document.getElementById("idDivStage")).fadeIn(4000)
         $("#idDivStage").css('opacity', 0);
-        $("#idDivStage").slideDown(1000);
+        $("#idDivStage").slideDown(2500);
         $("#idDivStage").animate(
                 {opacity: 1},
-                {queue: false, duration: 1000}
+                {queue: false, duration: 2500}
             );
     }
     return;
-    
-
-    //Name 
-    document.getElementById('idStageName').innerHTML = jsonObj["name"];
-
-    //Image
-    document.getElementById('idStageImage').src = 'static/images/'+ jsonObj["image_file"] +'?t='+Math.random();
-
-    //Image description
-    document.getElementById('idStageImageDesc').innerHTML = jsonObj["image_desc"];
-
-    //Audio - description
-    document.getElementById('idStageAudioDesc').innerHTML = jsonObj["description"];
-
-    //Audio - type
-    document.getElementById('idStageAudioType').innerHTML = "&#9838; Type: "+ jsonObj["audio_type"];
-
-    //Audio - Location
-    document.getElementById('idStageLocation').innerHTML = "&#127966; "+ jsonObj["location"];
-
-    //Duration
-    document.getElementById('idStageDuration').innerHTML = "&#9202; "+ jsonObj["duration"] + " seconds";
-
-    //Credits
-    document.getElementById('idStageCredits').innerHTML = jsonObj["date_created_or_captured"] + ", " + jsonObj["credit"];
-
-    //Audio
-    var audio = $("#idAudio");
-    var sourceUrl = 'static/sounds/'+jsonObj["audio_file"]+'?t='+Math.random();
-    $("#idAudioSrcMp3").attr("src", sourceUrl);
-    audio[0].pause(); //pause
-    audio[0].currentTime = 0; //reset time
-    audio[0].load(); // reload source
-
-    //Do not enable stage if in settings 
-    if(settingsViewEnabled){
-        return;
-    }
  }
 
  function collapseStage(){

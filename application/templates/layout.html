@@ -1,0 +1,32 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <title>BirdBox</title>
+    <meta name="description" content="BirdBox">
+    <meta name="author" content="Pratik Panchal">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {{cssInclude|safe}}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    {% include "includes/header.html" %}
+
+
+    {% block content %}
+
+    {% endblock %}
+
+
+    <!-- js includes-->
+    {{ jsInclude|safe }}
+
+</body>
+</html>

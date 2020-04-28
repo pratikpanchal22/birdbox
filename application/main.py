@@ -39,14 +39,18 @@ def fetchOnStageMetadata():
     cursor.execute(query)
     return list(cursor.fetchall())
 
-
+def fetchInfoForId(id):
+    cursor = mysql.connection.cursor()
+    query = "SELECT "+dbc.KEY_ID+", "+dbc.KEY_NAME+", "+dbc.KEY_AUDIO_FILE+", "+dbc.KEY_AUDIO_TYPE+", "+dbc.KEY_DESCRIPTION+", "+dbc.KEY_DURATION+", "+dbc.KEY_CREDIT+", "+dbc.KEY_DATE_CREATED_OR_CAPTURED+", "+dbc.KEY_IMAGE_FILE+", "+dbc.KEY_IMAGE_DESC+", "+dbc.KEY_LOCATION+", "+dbc.KEY_URL+" "+" FROM birdboxTable where "+dbc.KEY_ID+" = " + str(id)+";"
+    cursor.execute(query)
+    return list(cursor.fetchall())
 
 #################### App Routes ########################
 @app.route("/")
+@app.route("/index.htm")
+@app.route("/index.html")
 def index():
-    now = datetime.datetime.now()
     ts = str(int(time.time()))
-    #timeString = now.strftime("%Y-%m-%d %H:%M:%S")
 
     jsInclude = '<script src="/static/js/scripts.js?t='+ts+'"></script>'
     cssInclude = '<link rel="stylesheet" href="static/css/styles.css?t='+ts+'">'
@@ -57,9 +61,31 @@ def index():
     }
     return render_template('index.html', **templateData)
 
+@app.route("/infoPage.html")
+def infoPage():    
+    #Grab the id from url parameters
+    id = request.args.get("id")
+    #Fetch model
+    data = fetchInfoForId(id)
+
+    ts = str(int(time.time()))
+
+    jsInclude = '<script src="/static/js/scripts.js?t='+ts+'"></script>'
+    jsInclude += '<script src="/static/js/infoPageScripts.js?t='+ts+'"></script>'
+    cssInclude = '<link rel="stylesheet" href="static/css/styles.css?t='+ts+'">'
+
+    templateData = {
+        'jsInclude' : jsInclude,
+        'cssInclude' : cssInclude
+    }
+
+    templateData.update(data[0])
+
+    #Pass to template Data
+    return render_template('infoPage.html', **templateData)
+
 @app.route("/onDemand.json")
 def onDemand():
-    now = datetime.datetime.now()
     ts = str(int(time.time()))
 
     t = Thread(target=interface.processTrigger, args=[(interface.TriggerType.ON_DEMAND)])
@@ -75,7 +101,6 @@ def onDemand():
 
 @app.route("/onStage.json")
 def onStage():
-    now = datetime.datetime.now()
     ts = str(int(time.time()))
     
     t = request.args.get("t")
@@ -108,7 +133,6 @@ def onStage():
 
 @app.route("/idData.json")
 def idData():
-    now = datetime.datetime.now()
     ts = str(int(time.time()))
     
     t = request.args.get("t")

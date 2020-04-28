@@ -1,32 +1,5 @@
-<!doctype html>
-
-<html lang="en">
-
-<head>
-    <meta charset="utf-8">
-    <title>BirdBox</title>
-    <meta name="description" content="BirdBox">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    {{cssInclude|safe}}
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-</head>
-
-<body>
-
-    <!-- HEADER -->
-    <div id="idDivHeader">
-        <header id="idHeader">
-            <div id="header-left" class="fa fa-cog" style="font-size:30px">
-            </div>
-            <div id="header-right" style="font-size:24px">
-                &#128996;
-            </div>
-            <div id="header-center" style="font-size:18px">
-                <h2>BirdSong Box</h2>
-            </div>
-        </header>
-    </div>
+{% extends "layout.html" %}
+{% block content %}
 
     <!-- STAGE STATUS-->
     <div id="idDivStageStatus" style='display: block; overflow: hidden;'>
@@ -37,27 +10,6 @@
 
     <!-- STAGE -->
     <div id="idDivStage" style='display: none; overflow: hidden;'>
-        <!--center>
-            <h2 id="idStageName"></h2> 
-            <img id="idStageImage" src="" alt="Stage Image" width="100%" height="auto">
-        </center>
-        <h6 id="idStageImageDesc"></h6> 
-        <p id="idStageAudioDesc"></p> 
-        <p id="idStageAudioType"></p> 
-
-        <p id="idStageLocation"></p> 
-        <p id="idStageDuration"></p> 
-        <p id="idStageCredits"></p> 
-        <center>
-            <p>Listen on this device</p>
-            <audio id="idAudio" controls>
-                <source id="idAudioSrcMp3" src="" type="audio/mp3">
-            </audio>
-            <br>
-            <hr>
-        </center-->
-
-
     </div>
 
     <!-- LAUNCH PAGE -->
@@ -77,16 +29,4 @@
         </div>
     </div>
 
-    <!-- SETTINGS -->
-    <div id="idDivSettings" style='display: none; overflow: hidden;'>
-        <center>
-            <h3>Settings</h3>
-        </center>
-    </div>
-
-    <!-- js includes-->
-    {{ jsInclude|safe }}
-
-</body>
-
-</html>
+{% endblock %}    
