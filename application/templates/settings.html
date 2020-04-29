@@ -1,0 +1,215 @@
+{% extends "layout.html" %}
+{% block content %}
+
+    <div class="container">
+        <form id="idForm">
+
+            <center>
+                <h1>Settings</h1>
+            </center>
+
+            <div class="row">
+                <div class="col-left">
+                    <label for="idLandscape" id="idLabelLandscape" class="majorLabel">Landscape</label>
+                </div>
+                <div class="col-right">
+                    <select id="idLandscape" name="Landscape">
+                        <option value="RMNP">Rocky Mountain National Park, Colorado</option>
+                        <option value="YNP">Yellowstone National Park, Wyoming</option>
+                    </select>
+                </div>
+            </div>
+            <br>
+            <hr>
+
+            <div class="row">
+                <div class="col-left-fc">
+                    <label for="idTransactionDate" class="majorLabel">Continuous playback</label>
+                </div>
+                <div class="col-right-narrow">
+                    <label class="switch">
+                        <input type="checkbox" id="idCbSwitch">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="subContent" id="idDivSubContentCb">
+                <div class="row">
+                    <div class="col-left-indented">
+                        <label for="idTimeout">• Time to stop playing at</label>
+                    </div>
+                    <div class="col-right-narrow" id="idTimeout">
+                        <input type="time" id="idTimeout" name="Timeout" min="00:00" max="23:59">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-left-indented-2lines">
+                        <label>• Enable Upstage</label>
+                    </div>
+                    <div class="col-right-narrow">
+                        <label class="switch">
+                            <input type="checkbox" id="idUpstageSwitch">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="subContent" id="idDivSubContentUpstage">
+                    <div class="row">
+                        <div class="col-left-indented">
+                            <label for="idAmbience1">• Ambience 1</label>
+                        </div>
+                        <div class="col-right-narrow">
+                            <select id="idAmbience1" name="Ambience1">
+                                <option value="a0">None</option>
+                                <option value="a1">Ambience1</option>
+                                <option value="a2">Ambience2</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-left-indented">
+                            <label for="idAmbience2">• Ambience 2</label>
+                        </div>
+                        <div class="col-right-narrow">
+                            <select id="idAmbience2" name="Ambience2">
+                                <option value="a0">None</option>
+                                <option value="a1">Ambience1</option>
+                                <option value="a2">Ambience2</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr>
+
+            <div class="row">
+                <div class="col-left-fc">
+                    <label class="majorLabel">Motion based triggers</label>
+                </div>
+                <div class="col-right-narrow">
+                    <label class="switch">
+                        <input type="checkbox" id="idMotionSwitch">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="subContent" id="idDivSubContentMotion">
+                <div class="row">
+                    <div class="col-left-indented-2lines">
+                        <label for="idTimeout">• Minutes to wait in between</label>
+                    </div>
+                    <div class="col-right-narrow">
+                        <input type="number" name="Timeout" min="0" max="60">
+                    </div>
+                </div>
+            </div>
+            <hr>
+
+
+            <div class="row">
+                <div class="col-left-fc">
+                    <label class="majorLabel">Bird symphony</label>
+                </div>
+                <div class="col-right-narrow">
+                    <label class="switch">
+                        <input type="checkbox" id="idSymphonySwitch">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="subContent" id="idDivSubContentSymphony">
+                <div class="row">
+                    <div class="col-left-indented-2lines">
+                        <label>• Maximum number of birds in symphony</label>
+                    </div>
+                    <div class="col-right-narrow">
+                        <input type="number" name="Timeout" min="1" max="5">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-left-indented-2lines">
+                        <label>• Limit to same bird type</label>
+                    </div>
+                    <div class="col-right-narrow">
+                        <label class="switch">
+                            <input type="checkbox">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <hr>
+
+
+            <div class="row">
+                <div class="col-left-fc">
+                    <label class="majorLabel">Silent period</label>
+                </div>
+                <div class="col-right-narrow">
+                    <label class="switch">
+                        <input type="checkbox" id="idSilentPeriodSwitch">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="subContent" id="idDivSubContentSilentPeriod">
+                <div class="row">
+                    <div class="col-left-indented">
+                        <label>• Start time</label>
+                    </div>
+                    <div class="col-right-narrow">
+                        <input type="time" name="Timeout" min="00:00" max="23:59">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-left-indented">
+                        <label>• End time</label>
+                    </div>
+                    <div class="col-right-narrow">
+                        <input type="time" name="Timeout" min="00:00" max="23:59">
+                    </div>
+                </div>
+            </div>
+            <hr>
+
+            <div class="row">
+                <div class="col-left-fc">
+                    <label class="majorLabel">Volume</label>
+                </div>
+                <div class="col-right-narrow">
+                    <p id="idVolVal">x%</p>
+                </div>
+            </div>
+            <div class="row">
+                <div>
+                    <input id="idVolumeSlider" style="width: 75%; float: right;" type="range" min="1" max="100" value="50">
+                </div>
+            </div>
+            <hr>
+
+            <div class="row">
+                <input type="submit" value="Save">
+            </div>
+
+
+
+            <!--div class="row">
+                <label class="subLabelTableCell">Volume</label>
+                </p>
+                <div class="row">
+                    <input style="width: 90%;" type="range" min="1" max="100" value="50">
+                </div>
+            </div>
+            <br><br-->
+
+        </form>
+    </div>
+{% endblock %}  

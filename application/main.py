@@ -84,6 +84,22 @@ def infoPage():
     #Pass to template Data
     return render_template('infoPage.html', **templateData)
 
+@app.route("/settings.html")
+def settings():
+    ts = str(int(time.time()))
+
+    jsInclude = '<script src="/static/js/scripts.js?t='+ts+'"></script>'
+    jsInclude += '<script src="/static/js/settings.js?t='+ts+'"></script>'
+    cssInclude = '<link rel="stylesheet" href="static/css/styles.css?t='+ts+'">'
+    cssInclude += '<link rel="stylesheet" href="static/css/settings.css?t='+ts+'">'
+
+    templateData = {
+        'jsInclude' : jsInclude,
+        'cssInclude' : cssInclude
+    }
+
+    return render_template('settings.html', **templateData)    
+
 @app.route("/onDemand.json")
 def onDemand():
     ts = str(int(time.time()))
