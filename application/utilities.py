@@ -1,4 +1,5 @@
 import inspect
+from json import JSONEncoder
 
 def logger(logLevel, *argsv):
     s=""
@@ -12,3 +13,16 @@ def logger(logLevel, *argsv):
         else:
             s += " " + str(arg)
     print (s)
+
+def comma_separated_params_to_list(param):
+    result = []
+    for val in param.split(','):
+        if val:
+            result.append(val)
+    return result    
+
+class DateTimeEncoder(JSONEncoder):
+        #Override the default method
+        def default(self, obj):
+            if isinstance(obj, (datetime.date, datetime.datetime)):
+                return obj.isoformat()

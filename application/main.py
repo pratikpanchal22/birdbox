@@ -8,6 +8,7 @@ import time
 import json
 from json import JSONEncoder
 import interface as interface
+import utilities as u
 
 app = Flask(__name__)
 
@@ -19,13 +20,6 @@ app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 mysql = MySQL(app)
 
-# subclass JSONEncoder
-class DateTimeEncoder(JSONEncoder):
-        #Override the default method
-        def default(self, obj):
-            if isinstance(obj, (datetime.date, datetime.datetime)):
-                return obj.isoformat()
-
 #################### App Models #######################
 def fetchActiveEntries():
     cursor = mysql.connection.cursor()
@@ -33,9 +27,11 @@ def fetchActiveEntries():
     cursor.execute(query)
     return list(cursor.fetchall())
 
-def fetchOnStageMetadata():
+def fetchOnStageMetadata(comma_separated_ids):
     cursor = mysql.connection.cursor()
-    query = "SELECT "+dbc.KEY_ID+", "+dbc.KEY_NAME+", "+dbc.KEY_AUDIO_FILE+", "+dbc.KEY_AUDIO_TYPE+", "+dbc.KEY_DESCRIPTION+", "+dbc.KEY_DURATION+", "+dbc.KEY_CREDIT+", "+dbc.KEY_DATE_CREATED_OR_CAPTURED+", "+dbc.KEY_IMAGE_FILE+", "+dbc.KEY_IMAGE_DESC+", "+dbc.KEY_LOCATION+", "+dbc.KEY_URL+" "+" FROM birdboxTable where "+dbc.KEY_ACTIVE+" = true;"
+    #query = "SELECT "+dbc.KEY_ID+", "+dbc.KEY_NAME+", "+dbc.KEY_AUDIO_FILE+", "+dbc.KEY_AUDIO_TYPE+", "+dbc.KEY_DESCRIPTION+", "+dbc.KEY_DURATION+", "+dbc.KEY_CREDIT+", "+dbc.KEY_DATE_CREATED_OR_CAPTURED+", "+dbc.KEY_IMAGE_FILE+", "+dbc.KEY_IMAGE_DESC+", "+dbc.KEY_LOCATION+", "+dbc.KEY_URL+" "+" FROM birdboxTable where "+dbc.KEY_ACTIVE+" = true;"
+    query = "SELECT "+dbc.KEY_ID+", "+dbc.KEY_NAME+", "+dbc.KEY_IMAGE_FILE+" "+" FROM birdboxTable where "+dbc.KEY_ID+" in (" + comma_separated_ids + ");"
+    print("\n\n querY:",query)
     cursor.execute(query)
     return list(cursor.fetchall())
 
@@ -43,7 +39,7 @@ def fetchInfoForId(id):
     cursor = mysql.connection.cursor()
     query = "SELECT "+dbc.KEY_ID+", "+dbc.KEY_NAME+", "+dbc.KEY_AUDIO_FILE+", "+dbc.KEY_AUDIO_TYPE+", "+dbc.KEY_DESCRIPTION+", "+dbc.KEY_DURATION+", "+dbc.KEY_CREDIT+", "+dbc.KEY_DATE_CREATED_OR_CAPTURED+", "+dbc.KEY_IMAGE_FILE+", "+dbc.KEY_IMAGE_DESC+", "+dbc.KEY_LOCATION+", "+dbc.KEY_URL+" "+" FROM birdboxTable where "+dbc.KEY_ID+" = " + str(id)+";"
     cursor.execute(query)
-    return list(cursor.fetchall())
+    return list(cursor.fetchall())    
 
 #################### App Routes ########################
 @app.route("/")
@@ -100,7 +96,6 @@ def onDemand():
         "state":"successful",
         "ts": ts
     }
-
     return jsonify(response)
 
 @app.route("/onStage.json")
@@ -140,6 +135,11 @@ def idData():
     ts = str(int(time.time()))
     
     t = request.args.get("t")
+    comma_separated_ids = request.args.get("id")
+    #ids = u.comma_separated_params_to_list(request.args.get("id"))
+    #print ("\n\n############# ids: ",ids)
+    #for id in ids:
+    #    print ("id: ",id)
 
     print("local ts=",ts," t=",t," diff=",int(ts)-int(t))
 
@@ -154,42 +154,17 @@ def idData():
         print("Rejecting request because it is too old", jsonObj)
         return jsonify(jsonObj)
 
-    entries = fetchOnStageMetadata()
+    entries = fetchOnStageMetadata(comma_separated_ids)
     print("\n\nConverting entries to JSON:")
-    print(json.dumps(entries, cls=DateTimeEncoder))
+    print(json.dumps(entries, cls=u.DateTimeEncoder))
 
     if(len(entries)==0):
         jsonObj["state"] = "empty"
     else:
         jsonObj["state"] = "successful"
-        jsonObj["data"] = json.dumps(entries, cls=DateTimeEncoder)
+        jsonObj["data"] = json.dumps(entries, cls=u.DateTimeEncoder)
 
     return json.dumps(jsonObj)
-
-@app.route("/temps")
-def temps():
-    now = datetime.datetime.now()
-    timeString = now.strftime("%Y-%m-%d %H:%M")
-
-    cursor = mysql.connection.cursor()
-    #cursor.execute('CREATE TABLE example (id INTEGER, name VARCHAR(20))')
-
-    cursor.execute('SELECT * FROM tempdat')
-    
-    #return str(results[5]['temperature'])
-    row_headers=[x[0] for x in cursor.description]
-    results = cursor.fetchall()
-
-    json = []
-    for result in results:
-        json.append(dict(zip(row_headers,result)))
-
-    templateData = {
-        'title' : 'HELLO!',
-        'time': timeString,
-        'var1' : str(json)
-    }
-    return render_template('index.html', **templateData)    
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80, debug=True)
