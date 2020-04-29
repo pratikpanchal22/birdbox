@@ -68,6 +68,10 @@ def infoPage():
     #Fetch model
     data = fetchInfoForId(id)
 
+    #If the data returned is not exactly 1, go to home page
+    if(len(data) != 1):
+        return index()
+
     ts = str(int(time.time()))
 
     jsInclude = '<script src="/static/js/scripts.js?t='+ts+'"></script>'
