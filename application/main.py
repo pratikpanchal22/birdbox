@@ -9,6 +9,7 @@ import json
 from json import JSONEncoder
 import interface as interface
 import utilities as u
+import ast
 
 app = Flask(__name__)
 
@@ -39,7 +40,13 @@ def fetchInfoForId(id):
     cursor = mysql.connection.cursor()
     query = "SELECT "+dbc.KEY_ID+", "+dbc.KEY_NAME+", "+dbc.KEY_AUDIO_FILE+", "+dbc.KEY_AUDIO_TYPE+", "+dbc.KEY_DESCRIPTION+", "+dbc.KEY_DURATION+", "+dbc.KEY_CREDIT+", "+dbc.KEY_DATE_CREATED_OR_CAPTURED+", "+dbc.KEY_IMAGE_FILE+", "+dbc.KEY_IMAGE_DESC+", "+dbc.KEY_LOCATION+", "+dbc.KEY_URL+" "+" FROM birdboxTable where "+dbc.KEY_ID+" = " + str(id)+";"
     cursor.execute(query)
-    return list(cursor.fetchall())    
+    return list(cursor.fetchall()) 
+
+def fetchAppSettings():
+    cursor = mysql.connection.cursor()
+    query = "SELECT "+dbc.KEY_LAST_UPDATED+", "+dbc.KEY_SETTINGS+" "+" FROM "+dbc.TABLE_SETTINGS+" ORDER BY "+dbc.KEY_ID+" DESC LIMIT 1;"
+    cursor.execute(query)
+    return cursor.fetchall() 
 
 #################### App Routes ########################
 @app.route("/")
@@ -97,6 +104,52 @@ def settings():
         'jsInclude' : jsInclude,
         'cssInclude' : cssInclude
     }
+
+    settings = list(fetchAppSettings())[0]
+    print("\nSettings: ",settings)
+    print("Type of settings: ", type(settings))
+
+    print(settings['settings'])
+    s = settings['settings']
+    print("Type of s: ", type(s))
+    d = json.loads(s)
+    print("Type of d: ", type(d))
+    #print(settings['settings']['continuousPlayback']['enabled'])
+    print(d['landscape'])
+    print(d['continuousPlayback']['enabled'])
+    print(d['continuousPlayback']['endTime'])
+    print(d['continuousPlayback']['ambience1'])
+    print(d['continuousPlayback']['ambience2'])
+    print(d['motionTriggers']['enabled'])
+    print(d['motionTriggers']['frequencyInSeconds'])
+    print(d['symphony']['enabled'])
+    print(d['symphony']['maximum'])
+    print(d['symphony']['limitToSameType'])
+    print(d['silentPeriod']['enabled'])
+    print(d['silentPeriod']['startTime'])
+    print(d['silentPeriod']['endTime'])
+    print(d['volume'])
+    
+    settingsTemplateData = {
+        'landscape' : d['landscape'],
+        'cbEnabled' : d['continuousPlayback']['enabled'],
+        'cbEndTime' : d['continuousPlayback']['endTime'],
+        'ambienceEnabled' : False,
+        'ambience1' : d['continuousPlayback']['ambience1'],
+        'ambience2' : d['continuousPlayback']['ambience2'],
+        'mtEnabled' : d['motionTriggers']['enabled'],
+        'mtPeriod' : d['motionTriggers']['frequencyInSeconds'],
+        'symphony' : d['symphony']['enabled'],
+        'symMaxBirds' : d['symphony']['maximum'],
+        'symLimitToSame' : d['symphony']['limitToSameType'],
+        'silentPeriod' : d['silentPeriod']['enabled'],
+        'spStartTime' : d['silentPeriod']['startTime'],
+        'spEndTime' : d['silentPeriod']['endTime'],
+        'volume' : d['volume']
+    }
+    
+    templateData.update(settingsTemplateData)
+    
 
     return render_template('settings.html', **templateData)    
 

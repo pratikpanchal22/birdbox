@@ -5,6 +5,7 @@ MYSQL_DB = 'birdbox'
 
 ## Data Tables
 TABLE_PRIMARY = 'birdBoxTable'
+TABLE_SETTINGS = 'appSettings'
 
 ## Data access keys (column names)
 KEY_ID = 'id'
@@ -22,3 +23,6 @@ KEY_LOCATION = 'location'
 KEY_URL = 'url'
 KEY_LAST_INVOKED = 'last_invoked'
 KEY_ACTIVE = 'active'
+
+## Data access keys for Settings
+KEY_SETTINGS = 'settings'

@@ -21,6 +21,13 @@ function initializations() {
         }
     });
 
+    if (document.getElementById("idCbSwitch").checked == true) {
+        showSubContent(idDivSubContentCb);
+    }
+    else {
+        hideSubContent(idDivSubContentCb);
+    }
+
     $("#idUpstageSwitch").change(function () {
         if (document.getElementById("idUpstageSwitch").checked == true) {
             showSubContent(idDivSubContentUpstage);
@@ -29,6 +36,13 @@ function initializations() {
             hideSubContent(idDivSubContentUpstage);
         }
     });
+
+    if (document.getElementById("idUpstageSwitch").checked == true) {
+        showSubContent(idDivSubContentUpstage);
+    }
+    else {
+        hideSubContent(idDivSubContentUpstage);
+    }
 
     $("#idMotionSwitch").change(function () {
         if (document.getElementById("idMotionSwitch").checked == true) {
@@ -39,6 +53,13 @@ function initializations() {
         }
     });
 
+    if (document.getElementById("idMotionSwitch").checked == true) {
+        showSubContent(idDivSubContentMotion);
+    }
+    else {
+        hideSubContent(idDivSubContentMotion);
+    }
+
     $("#idSymphonySwitch").change(function () {
         if (document.getElementById("idSymphonySwitch").checked == true) {
             showSubContent(idDivSubContentSymphony);
@@ -48,6 +69,13 @@ function initializations() {
         }
     });
 
+    if (document.getElementById("idSymphonySwitch").checked == true) {
+        showSubContent(idDivSubContentSymphony);
+    }
+    else {
+        hideSubContent(idDivSubContentSymphony);
+    }
+
     $("#idSilentPeriodSwitch").change(function () {
         if (document.getElementById("idSilentPeriodSwitch").checked == true) {
             showSubContent(idDivSubContentSilentPeriod);
@@ -56,6 +84,13 @@ function initializations() {
             hideSubContent(idDivSubContentSilentPeriod);
         }
     });
+
+    if (document.getElementById("idSilentPeriodSwitch").checked == true) {
+        showSubContent(idDivSubContentSilentPeriod);
+    }
+    else {
+        hideSubContent(idDivSubContentSilentPeriod);
+    }
 
     /*$("#idVolumeSlider").on('change',function () {
         $("#idVolVal").text($("#idVolumeSlider").val() + "%");
