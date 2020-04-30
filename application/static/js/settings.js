@@ -10,87 +10,43 @@ $(document).ready(function () {
 
 });
 
+function setVisibility(targetDivId, visibility){
+    if(visibility == true){
+        showSubContent(targetDivId);
+    }
+    else {
+        hideSubContent(targetDivId);
+    }
+}
+
 function initializations() {
+    //Set initial visibility
+    setVisibility(idDivSubContentCb, document.getElementById("idCbSwitch").checked);
+    setVisibility(idDivSubContentUpstage, document.getElementById("idUpstageSwitch").checked);
+    setVisibility(idDivSubContentMotion, document.getElementById("idMotionSwitch").checked);
+    setVisibility(idDivSubContentSymphony, document.getElementById("idSymphonySwitch").checked);
+    setVisibility(idDivSubContentSilentPeriod, document.getElementById("idSilentPeriodSwitch").checked);
+
     //click handlers
     $("#idCbSwitch").change(function () {
-        if (document.getElementById("idCbSwitch").checked == true) {
-            showSubContent(idDivSubContentCb);
-        }
-        else {
-            hideSubContent(idDivSubContentCb);
-        }
+        setVisibility(idDivSubContentCb, document.getElementById("idCbSwitch").checked);
     });
-
-    if (document.getElementById("idCbSwitch").checked == true) {
-        showSubContent(idDivSubContentCb);
-    }
-    else {
-        hideSubContent(idDivSubContentCb);
-    }
 
     $("#idUpstageSwitch").change(function () {
-        if (document.getElementById("idUpstageSwitch").checked == true) {
-            showSubContent(idDivSubContentUpstage);
-        }
-        else {
-            hideSubContent(idDivSubContentUpstage);
-        }
+        setVisibility(idDivSubContentUpstage, document.getElementById("idUpstageSwitch").checked);
     });
-
-    if (document.getElementById("idUpstageSwitch").checked == true) {
-        showSubContent(idDivSubContentUpstage);
-    }
-    else {
-        hideSubContent(idDivSubContentUpstage);
-    }
 
     $("#idMotionSwitch").change(function () {
-        if (document.getElementById("idMotionSwitch").checked == true) {
-            showSubContent(idDivSubContentMotion);
-        }
-        else {
-            hideSubContent(idDivSubContentMotion);
-        }
+        setVisibility(idDivSubContentMotion, document.getElementById("idMotionSwitch").checked);
     });
-
-    if (document.getElementById("idMotionSwitch").checked == true) {
-        showSubContent(idDivSubContentMotion);
-    }
-    else {
-        hideSubContent(idDivSubContentMotion);
-    }
 
     $("#idSymphonySwitch").change(function () {
-        if (document.getElementById("idSymphonySwitch").checked == true) {
-            showSubContent(idDivSubContentSymphony);
-        }
-        else {
-            hideSubContent(idDivSubContentSymphony);
-        }
+        setVisibility(idDivSubContentSymphony, document.getElementById("idSymphonySwitch").checked);
     });
-
-    if (document.getElementById("idSymphonySwitch").checked == true) {
-        showSubContent(idDivSubContentSymphony);
-    }
-    else {
-        hideSubContent(idDivSubContentSymphony);
-    }
 
     $("#idSilentPeriodSwitch").change(function () {
-        if (document.getElementById("idSilentPeriodSwitch").checked == true) {
-            showSubContent(idDivSubContentSilentPeriod);
-        }
-        else {
-            hideSubContent(idDivSubContentSilentPeriod);
-        }
+        setVisibility(idDivSubContentSilentPeriod, document.getElementById("idSilentPeriodSwitch").checked);
     });
-
-    if (document.getElementById("idSilentPeriodSwitch").checked == true) {
-        showSubContent(idDivSubContentSilentPeriod);
-    }
-    else {
-        hideSubContent(idDivSubContentSilentPeriod);
-    }
 
     /*$("#idVolumeSlider").on('change',function () {
         $("#idVolVal").text($("#idVolumeSlider").val() + "%");
@@ -102,8 +58,6 @@ function initializations() {
         VolVal.innerHTML = this.value + "%";
     }
    
-
-
     //Fetch this settings from Server
     //document.getElementById("idSilentPeriodSwitch").checked = true;
 
