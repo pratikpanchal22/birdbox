@@ -103,57 +103,62 @@ def populateDataWithTable(db, table_name, col_names, dataRows):
     cursor.close()    
     return
 
-CSV_FILE = 'BirdBox - birdbox_table.csv'
+##########################################################################
+def importCsv():
+    CSV_FILE = 'BirdBox - birdbox_table.csv'
 
-col_names = ''
-col_data_types = ''
-dataRows = []
-with open(CSV_FILE, newline='') as csvfile:
-    csvData = csv.reader(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL, skipinitialspace=True)
-    for row in csvData:
-        #print(row)
-        #print(row[0])
-        if(row[0] == 'COLUMN_NAMES'):
-            col_names = row
-        elif(row[0] == 'DATA_TYPES'):
-            col_data_types = row
-        elif(row[0] == 'DATA_ROW'):
-            dataRows.append(row)
+    col_names = ''
+    col_data_types = ''
+    dataRows = []
+    with open(CSV_FILE, newline='') as csvfile:
+        csvData = csv.reader(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL, skipinitialspace=True)
+        for row in csvData:
+            #print(row)
+            #print(row[0])
+            if(row[0] == 'COLUMN_NAMES'):
+                col_names = row
+            elif(row[0] == 'DATA_TYPES'):
+                col_data_types = row
+            elif(row[0] == 'DATA_ROW'):
+                dataRows.append(row)
+            else:
+                pass
+
+    #CONNECT TO DATABASE
+    db = ''
+    for attempt in range(2):
+        try:
+            db = MySQLdb.connect(dbConfig.MYSQL_HOST, dbConfig.MYSQL_USER, dbConfig.MYSQL_PASSWORD, dbConfig.MYSQL_DB)
+        except MySQLdb._exceptions.OperationalError as err:
+            print("Something went wrong: {}".format(err))
+            print("Error code: ", err.args[0])
+            print("Error: ", err.args[1])
+            if(err.args[0] == 1049):
+                print("Database schema does not exist. Attempting to create new schema")
+                createDatabase(dbConfig.MYSQL_DB)
+                #db = MySQLdb.connect("localhost", "user", "password", "birdbox")
+                continue
         else:
-            pass
+            print("Connection to database established")
+            break
 
-#CONNECT TO DATABASE
-db = ''
-for attempt in range(2):
-    try:
-        db = MySQLdb.connect(dbConfig.MYSQL_HOST, dbConfig.MYSQL_USER, dbConfig.MYSQL_PASSWORD, dbConfig.MYSQL_DB)
-    except MySQLdb._exceptions.OperationalError as err:
-        print("Something went wrong: {}".format(err))
-        print("Error code: ", err.args[0])
-        print("Error: ", err.args[1])
-        if(err.args[0] == 1049):
-            print("Database schema does not exist. Attempting to create new schema")
-            createDatabase(dbConfig.MYSQL_DB)
-            #db = MySQLdb.connect("localhost", "user", "password", "birdbox")
-            continue
-    else:
-        print("Connection to database established")
-        break
+    #DROP TABLE IF TABLE EXISTS
+    if(tableExists(db, TABLE_NAME)):
+        cursor = db.cursor()
+        query = "DROP TABLE " + TABLE_NAME + ";"
+        cursor.execute(query)
+        cursor.close()
+        
+    #TABLE EXISTS
+    createTable(TABLE_NAME, db, col_names, col_data_types)
 
-#DROP TABLE IF TABLE EXISTS
-if(tableExists(db, TABLE_NAME)):
-    cursor = db.cursor()
-    query = "DROP TABLE " + TABLE_NAME + ";"
-    cursor.execute(query)
-    cursor.close()
-    
-#TABLE EXISTS
-createTable(TABLE_NAME, db, col_names, col_data_types)
-
-#POPULATE TABLE
-print("Number of data rows to inspect: ",len(dataRows))
-populateDataWithTable(db, TABLE_NAME, col_names, dataRows)
+    #POPULATE TABLE
+    print("Number of data rows to inspect: ",len(dataRows))
+    populateDataWithTable(db, TABLE_NAME, col_names, dataRows)
 
 
-db.close()
-exit()
+    db.close()
+    exit()
+
+if __name__ == "__main__":
+    importCsv()
