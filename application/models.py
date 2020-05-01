@@ -13,6 +13,7 @@ class ModelType(Enum):
     FOR_ID_SET_ACTIVE_UPDATE_TS = 4
     FOR_ID_UNSET_ACTIVE = 5
     UNSET_ACTIVE_FOR_DEAD_ENTRIES = 6
+    APP_SETTINGS = 7
 
 TABLE_NAME = "birdboxTable"
 
@@ -93,8 +94,12 @@ def fetchModel(modelType, *argv):
         return performDbOperation(dbConnection, TABLE_NAME, query)
     
     elif(modelType == ModelType.UNSET_ACTIVE_FOR_DEAD_ENTRIES):
-        query = query = "UPDATE "+TABLE_NAME+" SET "+dbc.KEY_ACTIVE+" = false WHERE "+dbc.KEY_ACTIVE+" = true AND UNIX_TIMESTAMP()-UNIX_TIMESTAMP("+dbc.KEY_LAST_UPDATED+")>duration+"+str(argv[0])+";"
+        query = "UPDATE "+TABLE_NAME+" SET "+dbc.KEY_ACTIVE+" = false WHERE "+dbc.KEY_ACTIVE+" = true AND UNIX_TIMESTAMP()-UNIX_TIMESTAMP("+dbc.KEY_LAST_UPDATED+")>duration+"+str(argv[0])+";"
         return performDbOperation(dbConnection, TABLE_NAME, query)
+
+    elif(modelType == ModelType.APP_SETTINGS):
+        query = "SELECT "+dbc.KEY_LAST_UPDATED+", "+dbc.KEY_SETTINGS+" "+" FROM "+dbc.TABLE_SETTINGS+" ORDER BY "+dbc.KEY_ID+" DESC LIMIT 1;"
+        return  getQueryResultsAsList(dbConnection, TABLE_NAME, query)
     
     else:
         print("[Models] Error! Unknown/unsupported model type: ", modelType)

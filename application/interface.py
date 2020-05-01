@@ -20,15 +20,17 @@ class CandidateSelectionModels(Enum):
 
 #GLOBALS - TODO: Move to persistent storage
 randomizeNumberOfChannels = True #TODO: get this from settings
-maxNumberOfChannels = 5          #TODO: get this from settings
+maxNumberOfChannels = 2          #TODO: get this from settings
 limitToSameSpecies = False       #TODO: get this from settings   
-maxVolumeMotionTrigger = 20      #TODO: get this from settings   
+maxVolumeMotionTrigger = 10      #TODO: get this from settings   
 
 def processMotionTrigger():
     #print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
-    
+
     #TODO: Right now don't see any need to push motion events in db. So skipping. 
     #But if required, this will be the place to do so. 
+
+    
 
     #Validations
     #1. TODO: Verify that not in silent period
@@ -92,8 +94,10 @@ def executeAudioFileOnSeparateThread(id, file):
     #Run audio file
     #audioCmd = "mpg321 --gain 10 --verbose --quiet"
     audioCmd = "mpg321 --gain "+str(maxVolumeMotionTrigger)+" --quiet"
-    basePath = " application/static/sounds/"
-    osCmd = audioCmd + basePath + file
+    #logger("_INFO", "os command running from directory: ")
+    #os.system("pwd")
+    basePath = "/home/pratikpanchal/virtualSandbox/birdbox/application/static/sounds/"
+    osCmd = audioCmd + " " + basePath + file
     #logger("_INFO_","os.command: ",osCmd)
     os.system(osCmd)
     
@@ -177,10 +181,29 @@ def getCandidateAudioFiles(modelType, numberOfChannels):
     
     return candidates
 
+def updateGlobalSettings():
+    d = json.loads(models.fetchModel(models.ModelType.APP_SETTINGS)[0]['settings'])
+
+    global maxNumberOfChannels
+    global limitToSameSpecies
+    global maxVolumeMotionTrigger
+
+    maxNumberOfChannels = int(d['symphony']['maximum'])
+    limitToSameSpecies = d['symphony']['limitToSameType']
+    maxVolumeMotionTrigger = int(d['volume'])
+
+    logger("_INFO_", "maxNumberOfChannels", maxNumberOfChannels)
+    logger("_INFO_", "limitToSameSpecies", limitToSameSpecies)
+    logger("_INFO_", "maxVolumeMotionTrigger", maxVolumeMotionTrigger)
+    return
+
 ####################################################################################
 def processTrigger(triggerType):
     #logger("_INFO_", "\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
     #print("@processTrigger: ",triggerType)
+
+    updateGlobalSettings()
+
     logger("_INFO_", "Trigger type:", triggerType)
     if(triggerType == TriggerType.MOTION):
         processMotionTrigger()
