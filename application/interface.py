@@ -23,6 +23,7 @@ randomizeNumberOfChannels = True #TODO: get this from settings
 maxNumberOfChannels = 2          #TODO: get this from settings
 limitToSameSpecies = False       #TODO: get this from settings   
 maxVolumeMotionTrigger = 10      #TODO: get this from settings   
+motionTriggerEnabled = False
 
 def processMotionTrigger():
     #print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
@@ -187,10 +188,12 @@ def updateGlobalSettings():
     global maxNumberOfChannels
     global limitToSameSpecies
     global maxVolumeMotionTrigger
+    global motionTriggerEnabled
 
     maxNumberOfChannels = int(d['symphony']['maximum'])
     limitToSameSpecies = d['symphony']['limitToSameType']
     maxVolumeMotionTrigger = int(d['volume'])
+    motionTriggerEnabled = d['motionTriggers']['enabled']
 
     logger("_INFO_", "maxNumberOfChannels", maxNumberOfChannels)
     logger("_INFO_", "limitToSameSpecies", limitToSameSpecies)
@@ -206,7 +209,10 @@ def processTrigger(triggerType):
 
     logger("_INFO_", "Trigger type:", triggerType)
     if(triggerType == TriggerType.MOTION):
-        processMotionTrigger()
+        if(motionTriggerEnabled == True):
+            processMotionTrigger()
+        else:
+            logger("_INFO_", "Motion triggers are disabled in appSettings. Ignoring")
     elif(triggerType == TriggerType.ON_DEMAND):
         processMotionTrigger()
     elif(triggerType == TriggerType.ALARM):
