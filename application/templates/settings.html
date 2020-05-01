@@ -14,9 +14,12 @@
                     <label for="idLandscape" id="idLabelLandscape" class="majorLabel">Landscape</label>
                 </div>
                 <div class="col-right">
-                    <select id="idLandscape" name="landscape" value={{landscape}}>
-                        <option value="RMNP">Rocky Mountain National Park, Colorado</option>
-                        <option value="YNP">Yellowstone National Park, Wyoming</option>
+                    <select id="idLandscape" name="landscape">
+                        <!--option value="RMNP">Rocky Mountain National Park, Colorado</option>
+                        <option value="YNP">Yellowstone National Park, Wyoming</option-->
+                        {% for loc in landscapeLocations %}
+                        <option value="{{loc['location']}}" {% if loc['location'] == landscape %}SELECTED{% endif %}>{{loc['location']}}</option>
+                        {% endfor %}
                     </select>
                 </div>
             </div>

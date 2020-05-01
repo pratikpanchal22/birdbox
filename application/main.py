@@ -48,6 +48,14 @@ def fetchAppSettings():
     cursor.execute(query)
     return cursor.fetchall() 
 
+def getLandscapeLocations():
+    cursor = mysql.connection.cursor()
+    query = "SELECT DISTINCT "+dbc.KEY_LOCATION+" from birdboxTable;"
+    cursor.execute(query)
+    results = cursor.fetchall()
+    cursor.close()
+    return results 
+
 def updateAppSettings(s):
     conn=mysql.connection
     cursor = conn.cursor()
@@ -196,10 +204,17 @@ def settings():
     print(d['silentPeriod']['startTime'])
     print(d['silentPeriod']['endTime'])
     print(d['volume'])
+
+    #Fetch options for 'landscape'
+    landscapeLocations = list(getLandscapeLocations())
+    
+    #Fetch options for 'ambience'
+
     
     settingsTemplateData = {
         'last_updated' : settings['last_updated'],
         'landscape' : d['landscape'],
+        'landscapeLocations' : landscapeLocations,
         'cbEnabled' : d['continuousPlayback']['enabled'],
         'cbEndTime' : d['continuousPlayback']['endTime'],
         'ambienceEnabled' : d['continuousPlayback']['upStageEnabled'],
