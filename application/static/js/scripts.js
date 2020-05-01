@@ -1,6 +1,5 @@
 //Globals
 stageElements = [];
-settingsViewEnabled = false;
 stageIsHidden = true;
 
 $(document).ready(function(){
@@ -18,9 +17,14 @@ $(document).ready(function(){
     stageElements = [];
     stageIsHidden = true;
 
+    //Set left-top icon
+    $('#header-left').removeClass();
+    $('#header-left').addClass("fa fa-cog");
+
      //click handlers
      $("#header-left").click(function(){
-        settingsClickHandler();
+        //settingsClickHandler();
+        window.location.href='settings.html';
      });
      
      $("#idDivStage").on("click", ".childDiv", function(){
@@ -157,6 +161,15 @@ $(document).ready(function(){
     else if (current == "🦚"){
         newVal = "🦜";
     }
+    else if (current == "🦜"){
+        newVal = "🕊️"
+    }
+    else if (current == "🕊️"){
+        newVal = "🦩"
+    }
+    else if (current == "🦩️" ){
+        newVal = "🦢"
+    }
     else {
         newVal = "🐦";
     }
@@ -275,47 +288,4 @@ $(document).ready(function(){
         );
     
     stageIsHidden = true;
- }
-
- function settingsClickHandler(){
-    console.log("settings clicked");
-    if(settingsViewEnabled){
-        settingsViewEnabled = false;
-        $("#idDivStageStatus").css(
-            'display','block',
-            'overflow','hidden'
-        );
-        $("#idMainName").css(
-            'display','block',
-            'overflow','hidden'
-        );
-        $("#idDivSettings").css(
-            'display','none',
-            'overflow','hidden'
-        );
-        //remove class - remvoe animation
-        //$(".fa").removeClass("fa-spin");
-    }
-    else {
-        settingsViewEnabled = true;
-        $("#idDivStage").css(
-            'display','none',
-            'overflow','hidden'
-        );
-        $("#idDivStageStatus").css(
-            'display','none',
-            'overflow','hidden'
-        );
-        $("#idMainName").css(
-            'display','none',
-            'overflow','hidden'
-        );
-        $("#idDivSettings").css(
-            'display','block',
-            'overflow','hidden'
-        );
-        //Add class - add animation
-        //$(".fa").addClass("fa-spin");
-        //$("#header-left").css('transform', 'none');
-    }
  }

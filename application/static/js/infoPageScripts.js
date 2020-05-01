@@ -14,5 +14,9 @@ $(document).ready(function(){
      document.getElementById("idBackToHomeButton").onclick = function(){
         window.location.href='/';
      }
+
+     document.getElementById("header-left").onclick = function(){
+        window.location.href='settings.html';
+     }
      return;
  }

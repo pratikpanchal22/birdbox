@@ -20,6 +20,11 @@ function setVisibility(targetDivId, visibility){
 }
 
 function initializations() {
+
+    //Set left-top icon
+    $('#header-left').removeClass();
+    $('#header-left').addClass("fa fa-home");
+
     //Set initial visibility
     setVisibility(idDivSubContentCb, document.getElementById("idCbSwitch").checked);
     setVisibility(idDivSubContentUpstage, document.getElementById("idUpstageSwitch").checked);
@@ -28,6 +33,12 @@ function initializations() {
     setVisibility(idDivSubContentSilentPeriod, document.getElementById("idSilentPeriodSwitch").checked);
 
     //click handlers
+    //click handlers
+    $("#header-left").click(function(){
+        //settingsClickHandler();
+        window.location.href='index.html';
+     });
+
     $("#idCbSwitch").change(function () {
         setVisibility(idDivSubContentCb, document.getElementById("idCbSwitch").checked);
     });
