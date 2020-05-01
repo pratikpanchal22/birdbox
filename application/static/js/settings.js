@@ -58,8 +58,8 @@ function initializations() {
         VolVal.innerHTML = this.value + "%";
     }
    
-    //Fetch this settings from Server
-    //document.getElementById("idSilentPeriodSwitch").checked = true;
+    //Set form submit action listener
+    document.getElementById("idForm").action = "saveSettings.json?t="+Math.floor(Date.now()/1000);
 
     return;
 }

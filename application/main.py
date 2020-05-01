@@ -48,6 +48,16 @@ def fetchAppSettings():
     cursor.execute(query)
     return cursor.fetchall() 
 
+def updateAppSettings(s):
+    conn=mysql.connection
+    cursor = conn.cursor()
+    query = "INSERT INTO "+dbc.TABLE_SETTINGS+" ("+dbc.KEY_SETTINGS+") VALUES ('" + s + "');"
+    results = cursor.execute(query)
+    conn.commit()
+    print (results)
+    return results
+
+
 #################### App Routes ########################
 @app.route("/")
 @app.route("/index.htm")
@@ -91,7 +101,60 @@ def infoPage():
     #Pass to template Data
     return render_template('infoPage.html', **templateData)
 
-@app.route("/settings.html")
+@app.route("/saveSettings.json", methods=['post', 'get'])
+def saveSettings():
+
+    #Get current copy of settings
+    d = json.loads(list(fetchAppSettings())[0]['settings'])
+
+    if(request.method == 'POST'):
+        print("\n\n *********** form data ******************")
+        print("request.data: ", request.data)
+        print("request.form: ", request.form)
+        if(request.form.get('cbSwitch')): print('cbSwitch checked')
+        if(request.form.get('upstageSwitch')): print('upstageSwitch checked')
+        if(request.form.get('mtEnabled')): print('mtEnabled checked')
+        if(request.form.get('symphonySwitch')): print('symphonySwitch checked')
+        if(request.form.get('symLimitToSame')): print('symLimitToSame checked')
+        if(request.form.get('silentPeriod')): print('silentPeriod checked')
+
+        for field in list(request.form):
+            print(field, "=", request.form.get(field)) #.name, " ==== ", field.description, " ==== ", field.label.text, " ==== ", field.data)
+
+            #Values
+            if(field == "landscape"): d['landscape'] = request.form.get(field)
+            if(field == "continuousPlayback.endTime"): d['continuousPlayback']['endTime'] = request.form.get(field)
+            if(field == "continuousPlayback.ambience1"): d['continuousPlayback']['ambience1'] = request.form.get(field)
+            if(field == "continuousPlayback.ambience2"): d['continuousPlayback']['ambience2'] = request.form.get(field)
+            if(field == "motionTriggers.frequency"): d['motionTriggers']['frequency'] = request.form.get(field)
+            
+            if(field == "symphony.maximum"): d['symphony']['maximum'] = request.form.get(field)
+            if(field == "silentPeriod.startTime"): d['silentPeriod']['startTime'] = request.form.get(field)
+            if(field == "silentPeriod.endTime"): d['silentPeriod']['endTime'] = request.form.get(field)
+            if(field == "volume"): d['volume'] = request.form.get(field)
+        
+        #Checkboxes
+        d['continuousPlayback']['enabled'] = True if(request.form.get("continuousPlayback.enabled")) else False
+        d['continuousPlayback']['upStageEnabled'] = True if(request.form.get("continuousPlayback.upStageEnabled")) else False
+        d['motionTriggers']['enabled'] = True if(request.form.get("motionTriggers.enabled")) else False
+        d['symphony']['enabled'] = True if(request.form.get("symphony.enabled")) else False
+        d['symphony']['limitToSameType'] = True if(request.form.get("symphony.limitToSameType")) else False
+        d['silentPeriod']['enabled'] = True if(request.form.get("silentPeriod.enabled")) else False
+
+        #Values
+
+        #Convert to json
+        jsonStr = json.dumps(d)
+        print("jsonStr type: ",type(jsonStr))
+        print(jsonStr)
+
+        #Push to database
+        updateAppSettings(jsonStr)
+        print("************* END *************")
+
+    return(settings())
+
+@app.route("/settings.html", methods=['post', 'get'])
 def settings():
     ts = str(int(time.time()))
 
@@ -105,15 +168,19 @@ def settings():
         'cssInclude' : cssInclude
     }
 
-    settings = list(fetchAppSettings())[0]
+    data = fetchAppSettings()
+    settings = list(data)[0]
     print("\nSettings: ",settings)
     print("Type of settings: ", type(settings))
 
     print(settings['settings'])
     s = settings['settings']
+    lu = settings['last_updated']
+    print(lu)
     print("Type of s: ", type(s))
     d = json.loads(s)
     print("Type of d: ", type(d))
+
     #print(settings['settings']['continuousPlayback']['enabled'])
     print(d['landscape'])
     print(d['continuousPlayback']['enabled'])
@@ -121,7 +188,7 @@ def settings():
     print(d['continuousPlayback']['ambience1'])
     print(d['continuousPlayback']['ambience2'])
     print(d['motionTriggers']['enabled'])
-    print(d['motionTriggers']['frequencyInSeconds'])
+    print(d['motionTriggers']['frequency'])
     print(d['symphony']['enabled'])
     print(d['symphony']['maximum'])
     print(d['symphony']['limitToSameType'])
@@ -131,14 +198,15 @@ def settings():
     print(d['volume'])
     
     settingsTemplateData = {
+        'last_updated' : settings['last_updated'],
         'landscape' : d['landscape'],
         'cbEnabled' : d['continuousPlayback']['enabled'],
         'cbEndTime' : d['continuousPlayback']['endTime'],
-        'ambienceEnabled' : False,
+        'ambienceEnabled' : d['continuousPlayback']['upStageEnabled'],
         'ambience1' : d['continuousPlayback']['ambience1'],
         'ambience2' : d['continuousPlayback']['ambience2'],
         'mtEnabled' : d['motionTriggers']['enabled'],
-        'mtPeriod' : d['motionTriggers']['frequencyInSeconds'],
+        'mtPeriod' : d['motionTriggers']['frequency'],
         'symphony' : d['symphony']['enabled'],
         'symMaxBirds' : d['symphony']['maximum'],
         'symLimitToSame' : d['symphony']['limitToSameType'],
@@ -149,8 +217,6 @@ def settings():
     }
     
     templateData.update(settingsTemplateData)
-    
-
     return render_template('settings.html', **templateData)    
 
 @app.route("/onDemand.json")

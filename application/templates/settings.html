@@ -2,10 +2,11 @@
 {% block content %}
 
     <div class="container">
-        <form id="idForm">
+        <form id="idForm", method="post">
 
             <center>
-                <h1>Settings</h1>
+                <h2>Settings</h2>
+                <h6>Last updated on {{last_updated}}</h6>
             </center>
 
             <div class="row">
@@ -13,7 +14,7 @@
                     <label for="idLandscape" id="idLabelLandscape" class="majorLabel">Landscape</label>
                 </div>
                 <div class="col-right">
-                    <select id="idLandscape" name="Landscape" value={{landscape}}>
+                    <select id="idLandscape" name="landscape" value={{landscape}}>
                         <option value="RMNP">Rocky Mountain National Park, Colorado</option>
                         <option value="YNP">Yellowstone National Park, Wyoming</option>
                     </select>
@@ -24,11 +25,11 @@
 
             <div class="row">
                 <div class="col-left-fc">
-                    <label for="idTransactionDate" class="majorLabel">Continuous playback</label>
+                    <label for="idCbSwitch" class="majorLabel">Continuous playback</label>
                 </div>
                 <div class="col-right-narrow">
                     <label class="switch">
-                        <input type="checkbox" id="idCbSwitch" {% if cbEnabled %}checked{% endif %}>
+                        <input type="checkbox" id="idCbSwitch" name="continuousPlayback.enabled" {% if cbEnabled %}checked{% endif %}>
                         <span class="slider round"></span>
                     </label>
                 </div>
@@ -37,10 +38,10 @@
             <div class="subContent" id="idDivSubContentCb">
                 <div class="row">
                     <div class="col-left-indented">
-                        <label for="idTimeout">• Time to stop playing at</label>
+                        <label for="idCbEndtime">• Time to stop playing at</label>
                     </div>
                     <div class="col-right-narrow" id="idTimeout">
-                        <input type="time" id="idTimeout" name="Timeout" min="00:00" max="23:59" value={{cbEndTime}}>
+                        <input type="time" id="idCbEndtime" name="continuousPlayback.endTime" min="00:00" max="23:59" value={{cbEndTime}}>
                     </div>
                 </div>
 
@@ -50,7 +51,7 @@
                     </div>
                     <div class="col-right-narrow">
                         <label class="switch">
-                            <input type="checkbox" id="idUpstageSwitch" {% if ambienceEnabled %}checked{% endif %}>
+                            <input type="checkbox" id="idUpstageSwitch" name="continuousPlayback.upStageEnabled" {% if ambienceEnabled %}checked{% endif %}>
                             <span class="slider round"></span>
                         </label>
                     </div>
@@ -62,7 +63,7 @@
                             <label for="idAmbience1">• Ambience 1</label>
                         </div>
                         <div class="col-right-narrow">
-                            <select id="idAmbience1" name="Ambience1" value={{ambience1}}>
+                            <select id="idAmbience1" name="continuousPlayback.ambience1" value={{ambience1}}>
                                 <option value="a0">None</option>
                                 <option value="a1">Ambience1</option>
                                 <option value="a2">Ambience2</option>
@@ -75,7 +76,7 @@
                             <label for="idAmbience2">• Ambience 2</label>
                         </div>
                         <div class="col-right-narrow">
-                            <select id="idAmbience2" name="Ambience2" value={{ambience2}}>
+                            <select id="idAmbience2" name="continuousPlayback.ambience2" value={{ambience2}}>
                                 <option value="a0">None</option>
                                 <option value="a1">Ambience1</option>
                                 <option value="a2">Ambience2</option>
@@ -92,7 +93,7 @@
                 </div>
                 <div class="col-right-narrow">
                     <label class="switch">
-                        <input type="checkbox" id="idMotionSwitch" {% if mtEnabled %}checked{% endif %}>
+                        <input type="checkbox" id="idMotionSwitch" name="motionTriggers.enabled" {% if mtEnabled %}checked{% endif %}>
                         <span class="slider round"></span>
                     </label>
                 </div>
@@ -104,7 +105,7 @@
                         <label for="idTimeout">• Minutes to wait in between</label>
                     </div>
                     <div class="col-right-narrow">
-                        <input type="number" name="Timeout" min="0" max="60" value={{mtPeriod}}>
+                        <input type="number" name="motionTriggers.frequency" min="0" max="60" value={{mtPeriod}}>
                     </div>
                 </div>
             </div>
@@ -117,7 +118,7 @@
                 </div>
                 <div class="col-right-narrow">
                     <label class="switch">
-                        <input type="checkbox" id="idSymphonySwitch" {% if symphony %}checked{% endif %}>
+                        <input type="checkbox" id="idSymphonySwitch" name="symphony.enabled" {% if symphony %}checked{% endif %}>
                         <span class="slider round"></span>
                     </label>
                 </div>
@@ -129,7 +130,7 @@
                         <label>• Maximum number of birds in symphony</label>
                     </div>
                     <div class="col-right-narrow">
-                        <input type="number" name="Timeout" min="1" max="5" value={{symMaxBirds}}>
+                        <input type="number" name="symphony.maximum" min="1" max="5" value={{symMaxBirds}}>
                     </div>
                 </div>
                 <div class="row">
@@ -138,7 +139,7 @@
                     </div>
                     <div class="col-right-narrow">
                         <label class="switch">
-                            <input type="checkbox" {% if symLimitToSame %}checked{% endif %}>
+                            <input type="checkbox" name="symphony.limitToSameType" {% if symLimitToSame %}checked{% endif %}>
                             <span class="slider round"></span>
                         </label>
                     </div>
@@ -153,7 +154,7 @@
                 </div>
                 <div class="col-right-narrow">
                     <label class="switch">
-                        <input type="checkbox" id="idSilentPeriodSwitch" {% if silentPeriod %}checked{% endif %}>
+                        <input type="checkbox" id="idSilentPeriodSwitch" name="silentPeriod.enabled" {% if silentPeriod %}checked{% endif %}>
                         <span class="slider round"></span>
                     </label>
                 </div>
@@ -165,7 +166,7 @@
                         <label>• Start time</label>
                     </div>
                     <div class="col-right-narrow">
-                        <input type="time" name="Timeout" min="00:00" max="23:59" value={{spStartTime}}>
+                        <input type="time" min="00:00" max="23:59" name="silentPeriod.startTime" value={{spStartTime}}>
                     </div>
                 </div>
 
@@ -174,7 +175,7 @@
                         <label>• End time</label>
                     </div>
                     <div class="col-right-narrow">
-                        <input type="time" name="Timeout" min="00:00" max="23:59" value={{spEndTime}}>
+                        <input type="time" min="00:00" max="23:59" name="silentPeriod.endTime" value={{spEndTime}}>
                     </div>
                 </div>
             </div>
@@ -190,7 +191,7 @@
             </div>
             <div class="row">
                 <div>
-                    <input id="idVolumeSlider" style="width: 75%; float: right;" type="range" min="1" max="100" value="{{volume}}">
+                    <input id="idVolumeSlider" style="width: 75%; float: right;" type="range" min="1" max="100" name="volume" value="{{volume}}">
                 </div>
             </div>
             <hr>
