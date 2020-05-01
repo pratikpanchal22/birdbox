@@ -1,32 +1,32 @@
 {% extends "layout.html" %}
 {% block content %}
 
-    <!-- STAGE STATUS-->
-    <div id="idDivStageStatus" style='display: block; overflow: hidden;'>
-        <center>
-            <p id="idStageSoundState"></p>
-        </center>
-    </div>
+<!-- STAGE STATUS-->
+<div id="idDivStageStatus" style='display: block; overflow: hidden;'>
+    <center>
+        <p id="idStageSoundState"></p>
+    </center>
+</div>
 
-    <!-- STAGE -->
-    <div id="idDivStage" style='display: none; overflow: hidden;'>
-    </div>
+<!-- STAGE -->
+<div id="idDivStage" style='display: none; overflow: hidden;'>
+</div>
 
-    <!-- LAUNCH PAGE -->
-    <div id='idMainName'>
-        <center>
-            <div>
-                <h1>BirdSong Box</h1>
-            </div>
-            <h5>v 1.0</h5>
-            <!--h4 id='idDdInfo'>39 sounds</h4-->
-            <hr>
-        </center>
-
+<!-- LAUNCH PAGE -->
+<div id='idMainName'>
+    <center>
         <div>
-            <a href="onDemand.json">Request OnDemand</a>
+            <h1>BirdSong Box</h1>
+        </div>
+        <!--h4 id='idDdInfo'>39 sounds</h4-->
+
+        <div id="idOnDemandButton">
+            <i id="idOnDemandIcon" class="fa fa-play-circle" style="color: rgb(0, 89, 255); font-size: 180px;"></i>
             <!--p class="indent25">Example of a tab</p-->
         </div>
-    </div>
+        <br>
+        <h6>v 1.0</h6>
+    </center>
+</div>
 
-{% endblock %}    
+{% endblock %}

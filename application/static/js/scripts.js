@@ -34,6 +34,16 @@ $(document).ready(function(){
 
         window.location.href='infoPage.html?id='+id;
      })
+
+     $("#idOnDemandButton").click(function(){
+        $("#idOnDemandIcon").css("color", "red");
+         $.getJSON("onDemand.json?t="+Math.floor(Date.now()/1000), function(result){
+            //process result ihere
+        }).done(function(){
+            //change color of button
+            $("#idOnDemandIcon").css("color", "blue");
+        });
+     })
      return;
  }
 
