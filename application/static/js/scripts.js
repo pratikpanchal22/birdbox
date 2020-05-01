@@ -240,6 +240,19 @@ $(document).ready(function(){
         }
     });
 
+    if(stageIsHidden){
+        stageIsHidden = false;
+        //Enable stage
+        //document.getElementById("idDivStage").style.display = "block";
+        //$(document.getElementById("idDivStage")).fadeIn(4000)
+        $("#idDivStage").css('opacity', 0);
+        $("#idDivStage").slideDown(1);
+        $("#idDivStage").animate(
+                {opacity: 1},
+                {queue: false, duration: 1}
+            );
+    }
+
     //Add all new ones
     for(var i=0; i<obj.length; i++){
 
@@ -272,7 +285,7 @@ $(document).ready(function(){
         $(childDiv).appendTo($('#idDivStage')).slideDown(1000);
     }
 
-    if(stageIsHidden){
+    /*if(stageIsHidden){
         stageIsHidden = false;
         //Enable stage
         //document.getElementById("idDivStage").style.display = "block";
@@ -283,7 +296,7 @@ $(document).ready(function(){
                 {opacity: 1},
                 {queue: false, duration: 2500}
             );
-    }
+    }*/
     return;
  }
 
