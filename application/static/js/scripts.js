@@ -39,8 +39,14 @@ $(document).ready(function(){
         $("#idOnDemandIcon").css("color", "red");
          $.getJSON("onDemand.json?t="+Math.floor(Date.now()/1000), function(result){
             //process result ihere
+            console.log(result)
         }).done(function(){
-            //change color of button
+            // Scroll up
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Set message 
+            // TODO: check for status before setting this message
+            $('#idStageSoundState').text("Waiting for arrival of birds");
+            //change color of button back to blue
             $("#idOnDemandIcon").css("color", "blue");
         });
      })
@@ -121,7 +127,7 @@ $(document).ready(function(){
         collapseStage();
         //change: 'you are listening to' to 'you heard'
         //document.getElementById('idStageSoundState').innerHTML = "You were listening to";
-        $('#idStageSoundState').text("No birds active right now");
+        $('#idStageSoundState').text("No birds active right now. Tap the button below to call one.");
     }
     else {
         console.log("Error: State: " + jsonObj["state"])
@@ -282,7 +288,8 @@ $(document).ready(function(){
             {opacity: 1},
             {queue: false, duration: 1000}
         );*/
-        $(childDiv).appendTo($('#idDivStage')).slideDown(1000);
+        //$(childDiv).appendTo($('#idDivStage')).slideDown(1000);
+        $(childDiv).prependTo($('#idDivStage')).slideDown(1000);
     }
 
     /*if(stageIsHidden){
