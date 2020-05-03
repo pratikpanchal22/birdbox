@@ -7,6 +7,8 @@ import inspect
 from utilities import logger
 import json
 import dbConfig as dbc
+from dateutil import parser
+import datetime
 
 #TRIGGER TYPES
 class TriggerType(Enum):
@@ -24,6 +26,25 @@ maxNumberOfChannels = 2          #TODO: get this from settings
 limitToSameSpecies = False       #TODO: get this from settings   
 maxVolumeMotionTrigger = 10      #TODO: get this from settings   
 motionTriggerEnabled = False
+silentPeriodEnabled = False
+silenStartTime = 0
+silentEndTime = 0
+
+def silentPeriodActive():
+    #logger("_INFO_","    ** silentStartTime = ", silenStartTime)
+    if(silentPeriodEnabled == False):
+        return False
+
+    #Local time
+    currentTime = datetime.datetime.now()
+    logger("_INFO_","    ** silentStartTime = ", silenStartTime)
+    logger("_INFO_","    ** currentTime = ", currentTime)
+    logger("_INFO_","    ** silentEndTime = ", silentEndTime)
+    if(silenStartTime <= currentTime < silentEndTime):
+        return True
+
+    return False
+    
 
 def processMotionTrigger():
     #print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
@@ -31,10 +52,12 @@ def processMotionTrigger():
     #TODO: Right now don't see any need to push motion events in db. So skipping. 
     #But if required, this will be the place to do so. 
 
-    
-
     #Validations
-    #1. TODO: Verify that not in silent period
+    #1. Verify that not in silent period
+    if(silentPeriodActive()):
+        logger("_INFO_", "Silent period active. Exiting")
+        return
+
     #2. TODO: Verify that required time has passed since last playback
     
     #Purge dead entries
@@ -189,11 +212,17 @@ def updateGlobalSettings():
     global limitToSameSpecies
     global maxVolumeMotionTrigger
     global motionTriggerEnabled
+    global silentPeriodEnabled
+    global silenStartTime
+    global silentEndTime
 
     maxNumberOfChannels = int(d['symphony']['maximum'])
     limitToSameSpecies = d['symphony']['limitToSameType']
     maxVolumeMotionTrigger = int(d['volume'])
     motionTriggerEnabled = d['motionTriggers']['enabled']
+    silentPeriodEnabled = d['silentPeriod']['enabled']
+    silenStartTime = parser.parse(d['silentPeriod']['startTime'])
+    silentEndTime = parser.parse(d['silentPeriod']['endTime'])
 
     logger("_INFO_", "maxNumberOfChannels", maxNumberOfChannels)
     logger("_INFO_", "limitToSameSpecies", limitToSameSpecies)
