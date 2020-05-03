@@ -32,6 +32,14 @@ body {
     overflow: hidden;
 }
 
+#idFooter{
+    margin: 0px;
+}
+#idDivFooter{
+    background: rgb(133, 182, 255);
+    overflow: hidden;
+}
+
 #header-left {
     padding-left: 15px;
     float: left;
