@@ -74,6 +74,8 @@ def index():
     ts = str(int(time.time()))
 
     jsInclude = '<script src="/static/js/scripts.js?t='+ts+'"></script>'
+    jsInclude += '<script src="https://kit.fontawesome.com/7daabcbab0.js" crossorigin="anonymous"></script>'
+    
     cssInclude = '<link rel="stylesheet" href="static/css/styles.css?t='+ts+'">'
     
     templateData = {
