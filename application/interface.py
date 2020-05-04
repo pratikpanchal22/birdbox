@@ -22,16 +22,26 @@ class CandidateSelectionModels(Enum):
 
 #GLOBALS - TODO: Move to persistent storage
 randomizeNumberOfChannels = True #TODO: get this from settings
-maxNumberOfChannels = 2          #TODO: get this from settings
-limitToSameSpecies = False       #TODO: get this from settings   
-maxVolumeMotionTrigger = 10      #TODO: get this from settings   
-motionTriggerEnabled = False
-silentPeriodEnabled = False
-silenStartTime = 0
-silentEndTime = 0
+appSettings = ""
 
-def silentPeriodActive():
-    #logger("_INFO_","    ** silentStartTime = ", silenStartTime)
+def updateGlobalSettings():
+    global appSettings
+    try:
+        appSettings = json.loads(models.fetchModel(models.ModelType.APP_SETTINGS)[0][dbc.KEY_SETTINGS])
+    except:
+        logger("_ERROR_", "appSettings[0][dbc.KEY_SETTINGS] doesn't exist")
+    return
+
+def isSilentPeriodActive():
+    dv = False
+    try:
+        silentPeriodEnabled = appSettings[dbc.KEY_SILENT_PERIOD][dbc.KEY_ENABLED]
+        silenStartTime = parser.parse(appSettings[dbc.KEY_SILENT_PERIOD][dbc.KEY_START_TIME])
+        silentEndTime = parser.parse(appSettings[dbc.KEY_SILENT_PERIOD][dbc.KEY_END_TIME])
+    except:
+        logger("_ERROR_", "appSettings doesn't exist")
+        return dv
+
     if(silentPeriodEnabled == False):
         return False
 
@@ -43,9 +53,50 @@ def silentPeriodActive():
     if(silenStartTime <= currentTime < silentEndTime):
         return True
 
-    return False
+    return dv
     
+def isMotionTriggerActive():
+    #Default
+    dv = True
+    try:
+        dv = appSettings[dbc.KEY_MOTION_TRIGGERS][dbc.KEY_ENABLED] 
+    except:
+        logger("_ERROR_", "appSettings[dbc.KEY_MOTION_TRIGGERS][dbc.KEY_ENABLED] doesn't exist")
+    return dv
 
+def maxNumberOfAllowedSimultaneousChannels():
+    #Default
+    dv = 5
+    try:
+        dv = int(appSettings[dbc.KEY_SYMPHONY][dbc.KEY_MAXIMUM])
+    except:
+        logger("_ERROR_", "appSettings[dbc.KEY_SYMPHONY][dbc.KEY_MAXIMUM] doesn't exist")
+    return dv
+
+def isBirdChoiceLimitedToSameSpecies():
+    #Default
+    dv = False
+    try:
+        dv = appSettings[dbc.KEY_SYMPHONY][dbc.KEY_LIMIT_TO_SAME_SPECIES] 
+    except:
+        logger("_ERROR_", "appSettings[dbc.KEY_SYMPHONY][dbc.KEY_LIMIT_TO_SAME_SPECIES] doesn't exist")
+    return dv
+
+def maxVolume():
+    #Default
+    dv = 100
+    try:
+        dv = int(appSettings[dbc.KEY_VOLUME])
+    except:
+        logger("_ERROR_", "appSettings[dbc.KEY_VOLUME] doesn't exist")
+    return dv
+
+def isContinuousPlaybackEnabled():
+    return False
+
+###################################################
+##########  ~~~ TRIGGER TYPE: MOTION ~~~ ##########
+###################################################
 def processMotionTrigger():
     #print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
 
@@ -54,7 +105,7 @@ def processMotionTrigger():
 
     #Validations
     #1. Verify that not in silent period
-    if(silentPeriodActive()):
+    if(isSilentPeriodActive()):
         logger("_INFO_", "Silent period active. Exiting")
         return
 
@@ -72,16 +123,16 @@ def processMotionTrigger():
             activeEntries = models.fetchModel(models.ModelType.ACTIVE_ENTRIES)
 
     logger("_INFO_", "Active entries:", activeEntries)
-    logger("_INFO_", "Active/maxAllowed=", len(activeEntries), "/", maxNumberOfChannels)
-    if(len(activeEntries) >= maxNumberOfChannels):
+    logger("_INFO_", "Active/maxAllowed=", len(activeEntries), "/", maxNumberOfAllowedSimultaneousChannels())
+    if(len(activeEntries) >= maxNumberOfAllowedSimultaneousChannels()):
         logger ("_INFO_", "Ignoring trigger. Exiting\n")
         return
 
     numberOfChannels = 1
     if(randomizeNumberOfChannels):
-        numberOfChannels = random.randint(1, maxNumberOfChannels-len(activeEntries))
+        numberOfChannels = random.randint(1, maxNumberOfAllowedSimultaneousChannels()-len(activeEntries))
     else:
-        numberOfChannels = maxNumberOfChannels - len(activeEntries)
+        numberOfChannels = maxNumberOfAllowedSimultaneousChannels() - len(activeEntries)
 
     candidates = getCandidateAudioFiles(CandidateSelectionModels.RNDM_TOP_75PC, numberOfChannels)
     
@@ -117,7 +168,7 @@ def executeAudioFileOnSeparateThread(id, file):
 
     #Run audio file
     #audioCmd = "mpg321 --gain 10 --verbose --quiet"
-    audioCmd = "mpg321 --gain "+str(maxVolumeMotionTrigger)+" --quiet"
+    audioCmd = "mpg321 --gain "+str(maxVolume())+" --quiet"
     #logger("_INFO", "os command running from directory: ")
     #os.system("pwd")
     basePath = "/home/pratikpanchal/virtualSandbox/birdbox/application/static/sounds/"
@@ -169,8 +220,8 @@ def getCandidateAudioFiles(modelType, numberOfChannels):
 
     if(numberOfChannels > 1):
         speciesConstrainedSet = []
-        logger("INFO_", "Limit to same species: ", limitToSameSpecies)
-        if(limitToSameSpecies):
+        logger("INFO_", "Limit to same species: ", isBirdChoiceLimitedToSameSpecies())
+        if(isBirdChoiceLimitedToSameSpecies()):
             for d in data:
                 if(d == candidates[0]):
                     print(d," :Already exists. Skipping")
@@ -205,29 +256,7 @@ def getCandidateAudioFiles(modelType, numberOfChannels):
     
     return candidates
 
-def updateGlobalSettings():
-    d = json.loads(models.fetchModel(models.ModelType.APP_SETTINGS)[0]['settings'])
 
-    global maxNumberOfChannels
-    global limitToSameSpecies
-    global maxVolumeMotionTrigger
-    global motionTriggerEnabled
-    global silentPeriodEnabled
-    global silenStartTime
-    global silentEndTime
-
-    maxNumberOfChannels = int(d['symphony']['maximum'])
-    limitToSameSpecies = d['symphony']['limitToSameType']
-    maxVolumeMotionTrigger = int(d['volume'])
-    motionTriggerEnabled = d['motionTriggers']['enabled']
-    silentPeriodEnabled = d['silentPeriod']['enabled']
-    silenStartTime = parser.parse(d['silentPeriod']['startTime'])
-    silentEndTime = parser.parse(d['silentPeriod']['endTime'])
-
-    logger("_INFO_", "maxNumberOfChannels", maxNumberOfChannels)
-    logger("_INFO_", "limitToSameSpecies", limitToSameSpecies)
-    logger("_INFO_", "maxVolumeMotionTrigger", maxVolumeMotionTrigger)
-    return
 
 ####################################################################################
 def processTrigger(triggerType):
@@ -238,7 +267,7 @@ def processTrigger(triggerType):
 
     logger("_INFO_", "Trigger type:", triggerType)
     if(triggerType == TriggerType.MOTION):
-        if(motionTriggerEnabled == True):
+        if(isMotionTriggerActive() == True):
             processMotionTrigger()
         else:
             logger("_INFO_", "Motion triggers are disabled in appSettings. Ignoring")

@@ -7,7 +7,7 @@ MYSQL_DB = 'birdbox'
 TABLE_PRIMARY = 'birdBoxTable'
 TABLE_SETTINGS = 'appSettings'
 
-## Data access keys (column names)
+## Data access keys (column names) for primary table
 KEY_ID = 'id'
 KEY_LAST_UPDATED = 'last_updated'
 KEY_NAME = 'name'
@@ -26,3 +26,12 @@ KEY_ACTIVE = 'active'
 
 ## Data access keys for Settings
 KEY_SETTINGS = 'settings'
+KEY_MOTION_TRIGGERS = 'motionTriggers'
+KEY_ENABLED = 'enabled'
+KEY_SYMPHONY = 'symphony'
+KEY_MAXIMUM = 'maximum'
+KEY_LIMIT_TO_SAME_SPECIES = 'limitToSameType'
+KEY_VOLUME = 'volume'
+KEY_SILENT_PERIOD = 'silentPeriod'
+KEY_START_TIME = 'startTime'
+KEY_END_TIME = 'endTime'
