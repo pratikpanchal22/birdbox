@@ -24,20 +24,34 @@ body {
     font-stretch: expanded;
 }
 
-#idHeader{
+#idHeader {
     margin: 0px;
-}
-#idDivHeader{
-    background: rgb(100, 128, 255);
-    overflow: hidden;
 }
 
-#idFooter{
+#idDivHeader {
+    background: rgb(100, 128, 255);
+    overflow: hidden;
+    /*position: fixed;*/
+    width: 100%;
+    /*position: fixed;
+    left: 0;
+    top: 0;
+    display: inline-block;*/
+}
+
+#idFooter {
     margin: 0px;
 }
-#idDivFooter{
+
+#idDivFooter {
     background: rgb(133, 182, 255);
     overflow: hidden;
+    /*position: fixed;*/
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    /*color: white;*/
+    text-align: center;
 }
 
 #header-left {
