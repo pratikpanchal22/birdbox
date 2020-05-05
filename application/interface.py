@@ -277,3 +277,7 @@ def processTrigger(triggerType):
         print("process alarm")
     else:
         print("unknown trigger type: ", triggerType)
+
+
+if __name__ == "__main__":
+    print("Error: Interface.py cannot be executed as a standalone python program")
