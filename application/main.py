@@ -10,6 +10,7 @@ from json import JSONEncoder
 import interface as interface
 import utilities as u
 import ast
+from enum import Enum
 
 app = Flask(__name__)
 
@@ -22,11 +23,41 @@ app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 mysql = MySQL(app)
 
 #################### App Models #######################
-def fetchActiveEntries():
-    cursor = mysql.connection.cursor()
-    query = "SELECT "+dbc.KEY_ID+" FROM birdboxTable where "+dbc.KEY_ACTIVE+" = true;"
-    cursor.execute(query)
-    return list(cursor.fetchall())
+def fetchModel(modelType, *argv):
+    return
+
+#MODEL TYPES
+class ModelType(Enum):
+    UNINITIALIZED_MODEL_TYPE = 0
+    ACTIVE_ENTRIES = 1
+
+class Models:
+    def __init__(self, sql):
+        self.sql = sql
+        self.modelType = ModelType.UNINITIALIZED_MODEL_TYPE
+        self.query = ""
+        
+    def fetch(self, modelType):
+        self.modelType = modelType
+        
+        if(self.modelType == ModelType.ACTIVE_ENTRIES):
+            self.query = "SELECT "+dbc.KEY_ID+" FROM birdboxTable where "+dbc.KEY_ACTIVE+" = true;"
+
+        if(self.query == ""):
+            print("Error! Empty query / unsupported ModelType")
+            return
+        
+        cursor = self.sql.connection.cursor()
+        cursor.execute(self.query)
+        r = list(cursor.fetchall())
+        cursor.close()
+        return r
+
+#def fetchActiveEntries():
+#    cursor = mysql.connection.cursor()
+#    query = "SELECT "+dbc.KEY_ID+" FROM birdboxTable where "+dbc.KEY_ACTIVE+" = true;"
+#    cursor.execute(query)
+#    return list(cursor.fetchall())
 
 def fetchOnStageMetadata(comma_separated_ids):
     cursor = mysql.connection.cursor()
@@ -269,7 +300,8 @@ def onStage():
         print("Rejecting request because it is too old", jsonObj)
         return jsonify(jsonObj)
 
-    entries = fetchActiveEntries()
+    #entries = fetchActiveEntries()
+    entries = Models(mysql).fetch(ModelType.ACTIVE_ENTRIES)
     print("\n\nfetchActiveEntries: Converting entries to JSON:")
     entries = [e['id'] for e in entries]
     print(json.dumps(entries))
