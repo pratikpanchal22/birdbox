@@ -35,9 +35,25 @@ $(document).ready(function(){
         window.location.href='infoPage.html?id='+id;
      })
 
-     $("#idOnDemandButton").click(function(){
-        $("#idOnDemandIcon").css("color", "red");
-         $.getJSON("onDemand.json?t="+Math.floor(Date.now()/1000), function(result){
+     $("#idSoloOnDemandButton").click(function(){
+        $("#idSoloOnDemandIcon").css("color", "red");
+         $.getJSON("onDemand.json?type=solo&t="+Math.floor(Date.now()/1000), function(result){
+            //process result ihere
+            console.log(result)
+        }).done(function(){
+            // Scroll up
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Set message 
+            // TODO: check for status before setting this message
+            $('#idStageSoundState').text("Waiting for arrival of a bird");
+            //change color of button back to blue
+            $("#idSoloOnDemandIcon").css("color", "rgb(79, 17, 212)");
+        });
+     })
+
+     $("#idSymphonyOnDemandButton").click(function(){
+        $("#idSymphonyOnDemandIcon").css("color", "red");
+         $.getJSON("onDemand.json?type=symphony&t="+Math.floor(Date.now()/1000), function(result){
             //process result ihere
             console.log(result)
         }).done(function(){
@@ -47,7 +63,7 @@ $(document).ready(function(){
             // TODO: check for status before setting this message
             $('#idStageSoundState').text("Waiting for arrival of birds");
             //change color of button back to blue
-            $("#idOnDemandIcon").css("color", "blue");
+            $("#idSymphonyOnDemandIcon").css("color", "rgb(17, 62, 212)");
         });
      })
      return;

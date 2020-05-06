@@ -274,18 +274,30 @@ def settings():
     templateData.update(settingsTemplateData)
     return render_template('settings.html', **templateData)    
 
-@app.route("/onDemand.json")
+@app.route("/onDemand.json", methods=['get'])
 def onDemand():
     ts = str(int(time.time()))
 
-    t = Thread(target=interface.processTrigger, args=[(interface.TriggerType.ON_DEMAND)])
-    t.name = "thread_motion_"+str(ts)
-    t.start()
+    onDemandType = request.args.get("type")
 
     response = {
-        "state":"successful",
+        "state":"unsuccessful",
         "ts": ts
     }
+
+    triggerType = interface.TriggerType.UNSUPPORTED_TRIGGER
+    if(onDemandType == "solo"):
+        triggerType = interface.TriggerType.ON_DEMAND_SOLO
+    elif(onDemandType == "symphony"):
+        triggerType = interface.TriggerType.ON_DEMAND_SYMPHONY
+    else: 
+        return jsonify(response)
+
+    t = Thread(target=interface.processTrigger, args=[(triggerType)])
+    t.name = "thread_"+onDemandType+"_"+str(ts)
+    t.start()
+
+    response['state'] = "successful"
     return jsonify(response)
 
 @app.route("/onStage.json")

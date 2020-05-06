@@ -12,8 +12,10 @@ import datetime
 
 #TRIGGER TYPES
 class TriggerType(Enum):
+    UNSUPPORTED_TRIGGER = 0
     MOTION = 1
-    ON_DEMAND = 2
+    ON_DEMAND_SOLO = 2
+    ON_DEMAND_SYMPHONY = 3
     ALARM = 3 
 
 #CANDIDATE SELECTION MODELS
@@ -271,8 +273,10 @@ def processTrigger(triggerType):
             processMotionTrigger()
         else:
             logger("_INFO_", "Motion triggers are disabled in appSettings. Ignoring")
-    elif(triggerType == TriggerType.ON_DEMAND):
+    elif(triggerType == TriggerType.ON_DEMAND_SOLO):
         processMotionTrigger()
+    elif(triggerType == TriggerType.ON_DEMAND_SYMPHONY):
+        processMotionTrigger()        
     elif(triggerType == TriggerType.ALARM):
         print("process alarm")
     else:
