@@ -99,7 +99,7 @@ def isContinuousPlaybackEnabled():
 ###################################################
 ##########  ~~~ TRIGGER TYPE: MOTION ~~~ ##########
 ###################################################
-def processMotionTrigger():
+def processMotionTrigger(**kwargs):
     #print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
 
     #TODO: Right now don't see any need to push motion events in db. So skipping. 
@@ -118,6 +118,7 @@ def processMotionTrigger():
     activeEntries = models.fetchModel(models.ModelType.ACTIVE_ENTRIES)
     activeEntries = [d[dbc.KEY_ID] for d in activeEntries]
 
+    #3. Verify that number of active entries don't exceed maximum allowed
     if(len(activeEntries) > 0):
         purged = purgeDeadEntries(60)
         if(purged > 0):
@@ -130,12 +131,17 @@ def processMotionTrigger():
         logger ("_INFO_", "Ignoring trigger. Exiting\n")
         return
 
-    numberOfChannels = 1
-    if(randomizeNumberOfChannels):
-        numberOfChannels = random.randint(1, maxNumberOfAllowedSimultaneousChannels()-len(activeEntries))
-    else:
+    #4. Compute number of channels to implement if not provided
+    if (kwargs.get("triggerType") == "solo"):
+        numberOfChannels = 1
+    elif (kwargs.get("triggerType") == "symphony"):         
         numberOfChannels = maxNumberOfAllowedSimultaneousChannels() - len(activeEntries)
-
+    elif (kwargs.get("triggerType") == "motion"):
+        if(randomizeNumberOfChannels):
+            numberOfChannels = random.randint(1, maxNumberOfAllowedSimultaneousChannels()-len(activeEntries))
+        else:
+            numberOfChannels = maxNumberOfAllowedSimultaneousChannels() - len(activeEntries)
+    
     candidates = getCandidateAudioFiles(CandidateSelectionModels.RNDM_TOP_75PC, numberOfChannels)
     
     #print("Candidate audio files:")
@@ -208,6 +214,8 @@ def getCandidateAudioFiles(modelType, numberOfChannels):
     logger("_INFO_", allIds)
     eligibleLength = int(0.75 * len(data))
     candidates = []
+    
+    #Choose first at random
     candidates.append(data[random.randint(0, eligibleLength-1)])
     logger("_INFO_", "CHOOSING 1st candidate:")
     logger("_INFO_", "{:>4.4} {:32.32} {}".format(str(candidates[0][dbc.KEY_ID]),candidates[0][dbc.KEY_NAME],candidates[0][dbc.KEY_AUDIO_FILE]))
@@ -237,8 +245,8 @@ def getCandidateAudioFiles(modelType, numberOfChannels):
         for element in data:
             logger("_INFO_", "{:>4.4} {:32.32} {}".format(str(element[dbc.KEY_ID]),element[dbc.KEY_NAME],element[dbc.KEY_AUDIO_FILE]))
     
-        if(numberOfChannels > len(data)):
-            logger("_INFO_", "Number of channels is more than data set at hand")
+        if(numberOfChannels >= len(data)):
+            logger("_INFO_", "Number of channels to implement "+numberOfChannels+" is more or equal to data set at hand ",len(data))
             for d in data:
                 candidates.append(d)
         else:
@@ -258,8 +266,6 @@ def getCandidateAudioFiles(modelType, numberOfChannels):
     
     return candidates
 
-
-
 ####################################################################################
 def processTrigger(triggerType):
     #logger("_INFO_", "\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
@@ -270,13 +276,13 @@ def processTrigger(triggerType):
     logger("_INFO_", "Trigger type:", triggerType)
     if(triggerType == TriggerType.MOTION):
         if(isMotionTriggerActive() == True):
-            processMotionTrigger()
+            processMotionTrigger(triggerType="motion")
         else:
             logger("_INFO_", "Motion triggers are disabled in appSettings. Ignoring")
     elif(triggerType == TriggerType.ON_DEMAND_SOLO):
-        processMotionTrigger()
+        processMotionTrigger(triggerType="solo")
     elif(triggerType == TriggerType.ON_DEMAND_SYMPHONY):
-        processMotionTrigger()        
+        processMotionTrigger(triggerType="symphony")        
     elif(triggerType == TriggerType.ALARM):
         print("process alarm")
     else:
