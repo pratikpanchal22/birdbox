@@ -23,13 +23,16 @@ app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 mysql = MySQL(app)
 
 #################### App Models #######################
-def fetchModel(modelType, *argv):
-    return
-
 #MODEL TYPES
 class ModelType(Enum):
     UNINITIALIZED_MODEL_TYPE = 0
+    #Fetch
     ACTIVE_ENTRIES = 1
+    METADATA_FOR_IDS = 2
+    INFO_FOR_ID = 3
+    APP_SETTINGS = 4
+    LIST_OF_LOCATIONS = 5
+    #Push
 
 class Models:
     def __init__(self, sql):
@@ -37,12 +40,34 @@ class Models:
         self.modelType = ModelType.UNINITIALIZED_MODEL_TYPE
         self.query = ""
         
-    def fetch(self, modelType):
+    def fetch(self, modelType, *argv):
         self.modelType = modelType
         
         if(self.modelType == ModelType.ACTIVE_ENTRIES):
             self.query = "SELECT "+dbc.KEY_ID+" FROM birdboxTable where "+dbc.KEY_ACTIVE+" = true;"
-
+        elif(self.modelType == ModelType.APP_SETTINGS):
+            self.query = "SELECT "+dbc.KEY_LAST_UPDATED+", "+dbc.KEY_SETTINGS+" "+" FROM "+dbc.TABLE_SETTINGS+" ORDER BY "+dbc.KEY_ID+" DESC LIMIT 1;"
+        elif(self.modelType == ModelType.LIST_OF_LOCATIONS):
+            self.query = "SELECT DISTINCT "+dbc.KEY_LOCATION+" from birdboxTable;"
+        elif(self.modelType == ModelType.METADATA_FOR_IDS):
+            try:
+                comma_separated_ids = argv[0]
+            except:
+                print("ERROR: Expected comma_sep_values")
+                return
+            comma_separated_ids = argv[0]
+            self.query = "SELECT "+dbc.KEY_ID+", "+dbc.KEY_NAME+", "+dbc.KEY_IMAGE_FILE+" "+" FROM birdboxTable where "+dbc.KEY_ID+" in (" + comma_separated_ids + ");"
+        elif(self.modelType == ModelType.INFO_FOR_ID):
+            try:
+                id = argv[0]
+            except:
+                print("ERROR: Expected id")
+                return
+            self.query = "SELECT "+dbc.KEY_ID+", "+dbc.KEY_NAME+", "+dbc.KEY_AUDIO_FILE+", "+dbc.KEY_AUDIO_TYPE+", "+dbc.KEY_DESCRIPTION+", "+dbc.KEY_DURATION+", "+dbc.KEY_CREDIT+", "+dbc.KEY_DATE_CREATED_OR_CAPTURED+", "+dbc.KEY_IMAGE_FILE+", "+dbc.KEY_IMAGE_DESC+", "+dbc.KEY_LOCATION+", "+dbc.KEY_URL+" "+" FROM birdboxTable where "+dbc.KEY_ID+" = " + str(id)+";"
+        else:
+            print("ERROR: Unsupported model type: ",str(self.modelType))
+            return
+        
         if(self.query == ""):
             print("Error! Empty query / unsupported ModelType")
             return
@@ -51,51 +76,30 @@ class Models:
         cursor.execute(self.query)
         r = list(cursor.fetchall())
         cursor.close()
+        #self.sql.connection.close()
         return r
 
-#def fetchActiveEntries():
-#    cursor = mysql.connection.cursor()
-#    query = "SELECT "+dbc.KEY_ID+" FROM birdboxTable where "+dbc.KEY_ACTIVE+" = true;"
-#    cursor.execute(query)
-#    return list(cursor.fetchall())
+    def push(self, modelType, *argv):
+        self.modelType = modelType
 
-def fetchOnStageMetadata(comma_separated_ids):
-    cursor = mysql.connection.cursor()
-    #query = "SELECT "+dbc.KEY_ID+", "+dbc.KEY_NAME+", "+dbc.KEY_AUDIO_FILE+", "+dbc.KEY_AUDIO_TYPE+", "+dbc.KEY_DESCRIPTION+", "+dbc.KEY_DURATION+", "+dbc.KEY_CREDIT+", "+dbc.KEY_DATE_CREATED_OR_CAPTURED+", "+dbc.KEY_IMAGE_FILE+", "+dbc.KEY_IMAGE_DESC+", "+dbc.KEY_LOCATION+", "+dbc.KEY_URL+" "+" FROM birdboxTable where "+dbc.KEY_ACTIVE+" = true;"
-    query = "SELECT "+dbc.KEY_ID+", "+dbc.KEY_NAME+", "+dbc.KEY_IMAGE_FILE+" "+" FROM birdboxTable where "+dbc.KEY_ID+" in (" + comma_separated_ids + ");"
-    print("\n\n querY:",query)
-    cursor.execute(query)
-    return list(cursor.fetchall())
+        if(self.modelType == ModelType.APP_SETTINGS):
+            try:
+                s = argv[0]
+            except:
+                print("ERROR: Expected string of settings")
+                return
+            self.query = "INSERT INTO "+dbc.TABLE_SETTINGS+" ("+dbc.KEY_SETTINGS+") VALUES ('" + s + "');"
 
-def fetchInfoForId(id):
-    cursor = mysql.connection.cursor()
-    query = "SELECT "+dbc.KEY_ID+", "+dbc.KEY_NAME+", "+dbc.KEY_AUDIO_FILE+", "+dbc.KEY_AUDIO_TYPE+", "+dbc.KEY_DESCRIPTION+", "+dbc.KEY_DURATION+", "+dbc.KEY_CREDIT+", "+dbc.KEY_DATE_CREATED_OR_CAPTURED+", "+dbc.KEY_IMAGE_FILE+", "+dbc.KEY_IMAGE_DESC+", "+dbc.KEY_LOCATION+", "+dbc.KEY_URL+" "+" FROM birdboxTable where "+dbc.KEY_ID+" = " + str(id)+";"
-    cursor.execute(query)
-    return list(cursor.fetchall()) 
+        if(self.query == ""):
+            print("Error! Empty query / unsupported ModelType")
+            return
 
-def fetchAppSettings():
-    cursor = mysql.connection.cursor()
-    query = "SELECT "+dbc.KEY_LAST_UPDATED+", "+dbc.KEY_SETTINGS+" "+" FROM "+dbc.TABLE_SETTINGS+" ORDER BY "+dbc.KEY_ID+" DESC LIMIT 1;"
-    cursor.execute(query)
-    return cursor.fetchall() 
-
-def getLandscapeLocations():
-    cursor = mysql.connection.cursor()
-    query = "SELECT DISTINCT "+dbc.KEY_LOCATION+" from birdboxTable;"
-    cursor.execute(query)
-    results = cursor.fetchall()
-    cursor.close()
-    return results 
-
-def updateAppSettings(s):
-    conn=mysql.connection
-    cursor = conn.cursor()
-    query = "INSERT INTO "+dbc.TABLE_SETTINGS+" ("+dbc.KEY_SETTINGS+") VALUES ('" + s + "');"
-    results = cursor.execute(query)
-    conn.commit()
-    print (results)
-    return results
-
+        conn=self.sql.connection
+        cursor = conn.cursor()
+        results = cursor.execute(self.query)
+        conn.commit()
+        cursor.close()
+        return results
 
 #################### App Routes ########################
 @app.route("/")
@@ -120,7 +124,7 @@ def infoPage():
     #Grab the id from url parameters
     id = request.args.get("id")
     #Fetch model
-    data = fetchInfoForId(id)
+    data = Models(mysql).fetch(ModelType.INFO_FOR_ID, id)
 
     #If the data returned is not exactly 1, go to home page
     if(len(data) != 1):
@@ -146,7 +150,8 @@ def infoPage():
 def saveSettings():
 
     #Get current copy of settings
-    d = json.loads(list(fetchAppSettings())[0]['settings'])
+    a = Models(mysql).fetch(ModelType.APP_SETTINGS)
+    d = json.loads(a[0]['settings'])
 
     if(request.method == 'POST'):
         print("\n\n *********** form data ******************")
@@ -190,7 +195,8 @@ def saveSettings():
         print(jsonStr)
 
         #Push to database
-        updateAppSettings(jsonStr)
+        m = Models(mysql).push(ModelType.APP_SETTINGS, jsonStr)
+        print("settings saved. m=",m)
         print("************* END *************")
 
     return(settings())
@@ -209,8 +215,9 @@ def settings():
         'cssInclude' : cssInclude
     }
 
-    data = fetchAppSettings()
-    settings = list(data)[0]
+    #data = fetchAppSettings()
+    a = Models(mysql).fetch(ModelType.APP_SETTINGS)
+    settings = a[0]
     print("\nSettings: ",settings)
     print("Type of settings: ", type(settings))
 
@@ -239,7 +246,7 @@ def settings():
     print(d['volume'])
 
     #Fetch options for 'landscape'
-    landscapeLocations = list(getLandscapeLocations())
+    landscapeLocations = Models(mysql).fetch(ModelType.LIST_OF_LOCATIONS)
     
     #Fetch options for 'ambience'
 
@@ -338,7 +345,7 @@ def idData():
         print("Rejecting request because it is too old", jsonObj)
         return jsonify(jsonObj)
 
-    entries = fetchOnStageMetadata(comma_separated_ids)
+    entries = Models(mysql).fetch(ModelType.METADATA_FOR_IDS, comma_separated_ids)
     print("\n\nConverting entries to JSON:")
     print(json.dumps(entries, cls=u.DateTimeEncoder))
 
