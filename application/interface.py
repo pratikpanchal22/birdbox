@@ -14,9 +14,10 @@ import datetime
 class TriggerType(Enum):
     UNSUPPORTED_TRIGGER = 0
     MOTION = 1
-    ON_DEMAND_SOLO = 2
-    ON_DEMAND_SYMPHONY = 3
-    ALARM = 3 
+    BUTTON_PRESS = 2
+    ON_DEMAND_SOLO = 3
+    ON_DEMAND_SYMPHONY = 4
+    ALARM = 5
 
 #CANDIDATE SELECTION MODELS
 class CandidateSelectionModels(Enum):
