@@ -268,6 +268,12 @@ def getCandidateAudioFiles(modelType, numberOfChannels):
     return candidates
 
 ####################################################################################
+def isLightRingActivated():
+    updateGlobalSettings()
+    # TODO: Fetch relevant setting
+    # Right now returning back motion enabled boolean
+    return isMotionTriggerActive()
+
 def processTrigger(triggerType):
     #logger("_INFO_", "\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
     #print("@processTrigger: ",triggerType)
@@ -286,6 +292,8 @@ def processTrigger(triggerType):
         processMotionTrigger(triggerType="symphony")        
     elif(triggerType == TriggerType.ALARM):
         print("process alarm")
+    elif(triggerType == TriggerType.BUTTON_PRESS):
+        processMotionTrigger(triggerType="solo")
     else:
         print("unknown trigger type: ", triggerType)
 

@@ -32,6 +32,7 @@ class LightRing:
         self.step = 1
         self.timeMarker = 0
         self.stop = False
+        self.thatHappenedForTheFirstTime = True
         return
 
     def run(self):
@@ -47,12 +48,17 @@ class LightRing:
 
         #logger("_INFO_", "Setting pwm to ", pwmCurrentVal)
 
-        if(self.pwmCurrentVal == 100 and self.timeMarker == 0):
-            logger("_INFO_", "\nSetting TIME MARKER to ", time.time())
+        if(self.pwmCurrentVal == 100 and self.thatHappenedForTheFirstTime):
+            self.thatHappenedForTheFirstTime = False
             self.timeMarker = time.time()
+
+        #if(self.pwmCurrentVal == 100 and self.timeMarker == 0):
+        #    logger("_INFO_", "\nSetting TIME MARKER to ", time.time())
+        #    self.timeMarker = time.time()
         elif(time.time() - self.timeMarker > 30 and self.pwmCurrentVal == 100 and self.pwmTargetValue != 0):
             logger("_INFO_", "DEACTIVATING LIGHT RING")
             self.pwmTargetValue = 0
+            self.thatHappenedForTheFirstTime = True
 
         if(self.stop == True):
             self.stop = False
@@ -71,7 +77,9 @@ class LightRing:
 
     def activate(self):
         self.pwmTargetValue = 100
-        self.timeMarker = 0
+        logger("_INFO_", "Moving time marker from", self.timeMarker, "to", time.time())
+        self.timeMarker = time.time()
+
 
 def motionHandler(channel):
     global lRing
@@ -82,11 +90,13 @@ def motionHandler(channel):
     t.name = "thread_motion_"+str(ts)
     t.start()
     logger("_INFO_", "Thread: ", t.name, "started")
-    lRing.activate()
+    if(interface.isLightRingActivated()):
+        lRing.activate()
     return
 
 
 def buttonPressHandler(channel):
+    global lRing
     ts = datetime.datetime.now()
     logger("_INFO_", "\nEvent captured on channel:", channel, ". Current value:", GPIO.input(channel), ". TS:", ts)
     #interface.processTrigger(interface.TriggerType.MOTION)
@@ -99,6 +109,7 @@ def buttonPressHandler(channel):
     t.name = "thread_motion_"+str(ts)
     t.start()
     logger("_INFO_", "Thread: ", t.name, "started")
+    lRing.activate()
     return
 
 ##############   MAIN   ##############
