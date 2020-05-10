@@ -319,18 +319,25 @@ def onStage():
         print("Rejecting request because it is too old", jsonObj)
         return jsonify(jsonObj)
 
-    #entries = fetchActiveEntries()
-    entries = Models(mysql).fetch(ModelType.ACTIVE_ENTRIES)
-    print("\n\nfetchActiveEntries: Converting entries to JSON:")
-    entries = [e['id'] for e in entries]
-    print(json.dumps(entries))
+    refetch = True
+    while refetch==True:
+        entries = None
+        entries = Models(mysql).fetch(ModelType.ACTIVE_ENTRIES)
+        entries = [e['id'] for e in entries]
+        print("\nfetchActiveEntries: ", json.dumps(entries))
+        if(len(entries)==0):
+            jsonObj["state"] = "empty"
+            refetch = False
+        else:
+            purged = interface.purgeDeadEntries(60)
+            print("Entries purged: ", purged)
+            if(purged == 0):
+                refetch = False
+                jsonObj["state"] = "successful"
+                jsonObj["data"] = json.dumps(entries)
+            else:
+                refetch = True
 
-    if(len(entries)==0):
-        jsonObj["state"] = "empty"
-    else:
-        jsonObj["state"] = "successful"
-        jsonObj["data"] = json.dumps(entries)
-        
     return json.dumps(jsonObj)
 
 @app.route("/idData.json")
