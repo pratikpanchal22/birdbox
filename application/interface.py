@@ -39,7 +39,7 @@ def isSilentPeriodActive():
     dv = False
     try:
         silentPeriodEnabled = appSettings[dbc.KEY_SILENT_PERIOD][dbc.KEY_ENABLED]
-        silenStartTime = parser.parse(appSettings[dbc.KEY_SILENT_PERIOD][dbc.KEY_START_TIME])
+        silentStartTime = parser.parse(appSettings[dbc.KEY_SILENT_PERIOD][dbc.KEY_START_TIME])
         silentEndTime = parser.parse(appSettings[dbc.KEY_SILENT_PERIOD][dbc.KEY_END_TIME])
     except:
         logger("_ERROR_", "appSettings doesn't exist")
@@ -50,11 +50,25 @@ def isSilentPeriodActive():
 
     #Local time
     currentTime = datetime.datetime.now()
-    logger("_INFO_","    ** silentStartTime = ", silenStartTime)
+    logger("_INFO_","    ** silentStartTime = ", silentStartTime)
     logger("_INFO_","    ** currentTime = ", currentTime)
     logger("_INFO_","    ** silentEndTime = ", silentEndTime)
-    if(silenStartTime <= currentTime < silentEndTime):
-        return True
+    
+    if (silentStartTime < silentEndTime):
+        if(silentStartTime <= currentTime < silentEndTime):
+            dv = True
+        else:
+            dv = False
+    elif (silentStartTime > silentEndTime):
+        if(silentStartTime <= currentTime or currentTime < silentEndTime):
+            dv = True
+        else:
+            dv = False
+    else:
+        if(silentStartTime == currentTime == silentEndTime):
+            dv = True
+        else:
+            dv = False
 
     return dv
     
