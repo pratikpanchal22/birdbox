@@ -2,18 +2,18 @@
 stageElements = [];
 stageIsHidden = true;
 
-$(document).ready(function(){
-    if (!jQuery) {  
-      // jQuery is not loaded
-      alert("Error jQuery is not loaded");
-      return;
+$(document).ready(function () {
+    if (!jQuery) {
+        // jQuery is not loaded
+        alert("Error jQuery is not loaded");
+        return;
     }
 
     initializations();
     getOnStageMetadata();
- });
+});
 
- function initializations(){
+function initializations() {
     stageElements = [];
     stageIsHidden = true;
 
@@ -21,26 +21,26 @@ $(document).ready(function(){
     $('#header-left').removeClass();
     $('#header-left').addClass("fa fa-cog");
 
-     //click handlers
-     $("#header-left").click(function(){
+    //click handlers
+    $("#header-left").click(function () {
         //settingsClickHandler();
-        window.location.href='settings.html';
-     });
-     
-     $("#idDivStage").on("click", ".childDiv", function(){
+        window.location.href = 'settings.html';
+    });
+
+    $("#idDivStage").on("click", ".childDiv", function () {
         stageChildDiv = $(this).attr("id");
         console.log("###*** childDiv clicked: " + stageChildDiv);
         id = Number(stageChildDiv.substring(10, stageChildDiv.length));
 
-        window.location.href='infoPage.html?id='+id;
-     })
+        window.location.href = 'infoPage.html?id=' + id;
+    })
 
-     $("#idSoloOnDemandButton").click(function(){
+    $("#idSoloOnDemandButton").click(function () {
         $("#idSoloOnDemandIcon").css("color", "red");
-         $.getJSON("onDemand.json?type=solo&t="+Math.floor(Date.now()/1000), function(result){
+        $.getJSON("onDemand.json?type=solo&t=" + Math.floor(Date.now() / 1000), function (result) {
             //process result ihere
             console.log(result)
-        }).done(function(){
+        }).done(function () {
             // Scroll up
             window.scrollTo({ top: 0, behavior: 'smooth' });
             // Set message 
@@ -49,14 +49,14 @@ $(document).ready(function(){
             //change color of button back to blue
             $("#idSoloOnDemandIcon").css("color", "rgb(79, 17, 212)");
         });
-     })
+    })
 
-     $("#idSymphonyOnDemandButton").click(function(){
+    $("#idSymphonyOnDemandButton").click(function () {
         $("#idSymphonyOnDemandIcon").css("color", "red");
-         $.getJSON("onDemand.json?type=symphony&t="+Math.floor(Date.now()/1000), function(result){
+        $.getJSON("onDemand.json?type=symphony&t=" + Math.floor(Date.now() / 1000), function (result) {
             //process result ihere
             console.log(result)
-        }).done(function(){
+        }).done(function () {
             // Scroll up
             window.scrollTo({ top: 0, behavior: 'smooth' });
             // Set message 
@@ -65,33 +65,49 @@ $(document).ready(function(){
             //change color of button back to blue
             $("#idSymphonyOnDemandIcon").css("color", "rgb(17, 62, 212)");
         });
-     })
-     return;
- }
+    })
+    return;
+}
 
- function getOnStageMetadata(){
-     $.getJSON("onStage.json?t="+Math.floor(Date.now()/1000), function(result){
-         processStage(result);
-     }).done(function(){
-         setTimeout('getOnStageMetadata()', 2000);
-     });
- }
+lostConnectionHandle = null
 
- function isSameAsStageElements(obj){
-    if(stageElements.length != obj.length){
+function getOnStageMetadata() {
+
+    lostConnectionHandle = setTimeout(function () {
+        $("#header-right").html("❌");
+    }, 4000);
+
+    $.getJSON("onStage.json?t=" + Math.floor(Date.now() / 1000), function (result) {
+        processStage(result);
+    }).done(function () {
+        setTimeout('getOnStageMetadata()', 2000);
+        // Cancel existing 
+        if (lostConnectionHandle != null) {
+            clearTimeout(lostConnectionHandle);
+            lostConnectionHandle = null;
+        }
+    });
+}
+
+function lostConnection() {
+
+}
+
+function isSameAsStageElements(obj) {
+    if (stageElements.length != obj.length) {
         return false
     }
 
-    for(var i=0; i<obj.length; i++){
-        if(!stageElements.includes(obj[i])){
+    for (var i = 0; i < obj.length; i++) {
+        if (!stageElements.includes(obj[i])) {
             return false;
         }
     }
 
     return true;
- }
- 
- function processStage(jsonObj){
+}
+
+function processStage(jsonObj) {
     //console.log("received data: " +jsonObj);
     //Indicator
     updateStatusIndicator()
@@ -100,45 +116,45 @@ $(document).ready(function(){
     remoteTs = parseInt(jsonObj["ts"]);
     diff = localTs - remoteTs;
 
-    console.log("Local: "+Math.floor(Date.now() / 1000)
-        +"  Remote: "+jsonObj["ts"]
-        +"  Difference: "+diff);
+    console.log("Local: " + Math.floor(Date.now() / 1000)
+        + "  Remote: " + jsonObj["ts"]
+        + "  Difference: " + diff);
 
-    if(diff > 1){
+    if (diff > 1) {
         console.log("Data too old. Skipping");
         return;
     }
 
-    if(jsonObj["state"] == "successful"){
+    if (jsonObj["state"] == "successful") {
         console.log(jsonObj["data"])
         obj = JSON.parse(jsonObj["data"]);
         console.log("Number of entries: " + Object.keys(obj).length)
 
-        if(isSameAsStageElements(obj)){
+        if (isSameAsStageElements(obj)) {
             console.log("Stage is in sync with " + obj);
         }
         else {
             console.log(">>> Updating stage " + obj);
             stageElements = obj;
             searchIds = "?id="
-            for(var i=0; i<stageElements.length; i++){
+            for (var i = 0; i < stageElements.length; i++) {
                 searchIds += stageElements[i] + ",";
             }
-            searchIds = searchIds.substring(0, searchIds.length-1);
+            searchIds = searchIds.substring(0, searchIds.length - 1);
             console.log(searchIds);
 
-            searchUrl = "idData.json" + searchIds + "&t=" + Math.floor(Date.now()/1000);
+            searchUrl = "idData.json" + searchIds + "&t=" + Math.floor(Date.now() / 1000);
 
             //Get information on all ids
-            $.getJSON(searchUrl, function(result){
-                updateStage(result);       
-            }).done(function(){
-                
+            $.getJSON(searchUrl, function (result) {
+                updateStage(result);
+            }).done(function () {
+
             });
-                    
+
         }
     }
-    else if(jsonObj["state"] == "empty"){
+    else if (jsonObj["state"] == "empty") {
         console.log("Nothing active right now")
         collapseStage();
         //change: 'you are listening to' to 'you heard'
@@ -149,16 +165,16 @@ $(document).ready(function(){
         console.log("Error: State: " + jsonObj["state"])
         //hide stage
     }
- }
+}
 
- function updateStatusIndicator1(){
-    
+function updateStatusIndicator1() {
+
     var current = $("#header-right").html();
     var newVal = "&#128993;";
 
     //console.log("Div.text: " + current);
-    
-    if(current == "🟢") {
+
+    if (current == "🟢") {
         newVal = "&#128993;";
     }
     else {
@@ -166,40 +182,40 @@ $(document).ready(function(){
     }
     //console.log("New val: " + newVal);
     $("#header-right").html(newVal);
- }
+}
 
- function updateStatusIndicator(){
-    
+function updateStatusIndicator() {
+
     var current = $("#header-right").html();
     var newVal = "&#128038;";
 
     //console.log("Div.text: " + current);
-    
-    if(current == "🐦") {
+
+    if (current == "🐦") {
         newVal = "🦃";
     }
-    else if (current == "🦃"){
+    else if (current == "🦃") {
         newVal = "🦅";
     }
-    else if (current == "🦅"){
+    else if (current == "🦅") {
         newVal = "🦆";
     }
-    else if (current == "🦆"){
+    else if (current == "🦆") {
         newVal = "🦉";
     }
-    else if (current == "🦉"){
+    else if (current == "🦉") {
         newVal = "🦚";
-    }    
-    else if (current == "🦚"){
+    }
+    else if (current == "🦚") {
         newVal = "🦜";
     }
-    else if (current == "🦜"){
+    else if (current == "🦜") {
         newVal = "🕊️"
     }
-    else if (current == "🕊️"){
+    else if (current == "🕊️") {
         newVal = "🦩"
     }
-    else if (current == "🦩️" ){
+    else if (current == "🦩️") {
         newVal = "🦢"
     }
     else {
@@ -207,23 +223,23 @@ $(document).ready(function(){
     }
     //console.log("New val: " + newVal);
     $("#header-right").html(newVal);
- }
+}
 
- function updateStage(data){
+function updateStage(data) {
     //console.log(data);
 
-    if(data["state"] != "successful"){
+    if (data["state"] != "successful") {
         console.log("data.state != successful.")
         return;
     }
 
-    obj = JSON.parse(data["data"]); 
+    obj = JSON.parse(data["data"]);
     console.log("Size of data: " + obj.length);
     //console.log("Data: " + JSON.stringify(obj));
-    
+
     //SoundState
-    if(obj.length > 1){
-        $('#idStageSoundState').text("You are listening to a "+obj.length+"-bird symphony");
+    if (obj.length > 1) {
+        $('#idStageSoundState').text("You are listening to a " + obj.length + "-bird symphony");
     }
     else {
         $('#idStageSoundState').text("You are listening to a");
@@ -233,36 +249,36 @@ $(document).ready(function(){
     //Remove all current childDivs
     //$("#idDivStage").empty();
     //Remove child divs that no longer exist in stageElements
-    $("#idDivStage").children().each(function(){
+    $("#idDivStage").children().each(function () {
         stageChildDiv = $(this).attr("id");
 
-        if(stageChildDiv === undefined){
-            
+        if (stageChildDiv === undefined) {
+
         }
         else {
             id = Number(stageChildDiv.substring(10, stageChildDiv.length));
 
-            if(!stageElements.includes(id)){
+            if (!stageElements.includes(id)) {
                 //remove
                 console.log("Removing: " + stageChildDiv);
 
-                if($('#'+stageChildDiv).css('opacity') == 0){
+                if ($('#' + stageChildDiv).css('opacity') == 0) {
                     //remove immediately
                     console.log("******** Removing " + stageChildDiv + " immediately")
                     $(this).remove();
                 }
 
-                $('#'+stageChildDiv).css('opacity', 1)
+                $('#' + stageChildDiv).css('opacity', 1)
                     .slideUp(1000)
                     .animate(
-                        {opacity: 0},
-                        {queue: false, duration: 1000}
-                    );                
+                        { opacity: 0 },
+                        { queue: false, duration: 1000 }
+                    );
             }
         }
     });
 
-    if(stageIsHidden){
+    if (stageIsHidden) {
         stageIsHidden = false;
         //Enable stage
         //document.getElementById("idDivStage").style.display = "block";
@@ -270,20 +286,20 @@ $(document).ready(function(){
         $("#idDivStage").css('opacity', 0);
         $("#idDivStage").slideDown(1);
         $("#idDivStage").animate(
-                {opacity: 1},
-                {queue: false, duration: 1}
-            );
+            { opacity: 1 },
+            { queue: false, duration: 1 }
+        );
     }
 
     //Add all new ones
-    for(var i=0; i<obj.length; i++){
+    for (var i = 0; i < obj.length; i++) {
 
         //console.log("stringify obj: " + JSON.stringify(obj[i]));
         var o = obj[i];
         //console.log("stringify o: " + JSON.stringify(o));
 
         //if element is already on the list, skip
-        if($('#idChildDiv'+String(o.id)).length){
+        if ($('#idChildDiv' + String(o.id)).length) {
             console.log("Child div " + o.id + " exists! Skipping");
             continue;
         }
@@ -293,12 +309,12 @@ $(document).ready(function(){
         var divId = "idChildDiv" + String(o.id);
         var nameId = "idChildName" + String(o.id);
         var imageId = "idChildImage" + String(o.id);
-        childDiv = '<div id="'+divId+'" class="childDiv" style="display: none;"><center>'+
-                    '<h3 id="'+nameId+'">'+o.name+'</h3>'+ 
-                    '<img id="'+imageId+'" src="static/images/'+o.image_file+'" alt="Stage Image" width="100%" height="auto">'+
-                    '<i>(tap for more)</i>'+
-                    '<br/><br/>'
-                    '</center></div>';
+        childDiv = '<div id="' + divId + '" class="childDiv" style="display: none;"><center>' +
+            '<h3 id="' + nameId + '">' + o.name + '</h3>' +
+            '<img id="' + imageId + '" src="static/images/' + o.image_file + '" alt="Stage Image" width="100%" height="auto">' +
+            '<i>(tap for more)</i>' +
+            '<br/><br/>'
+        '</center></div>';
 
         /*$("#idDivStage").append(childDiv).animate(
             {opacity: 1},
@@ -321,17 +337,17 @@ $(document).ready(function(){
             );
     }*/
     return;
- }
+}
 
- function collapseStage(){
+function collapseStage() {
     //document.getElementById("idDivStage").style.display = "none";
     //$(document.getElementById("idDivStage")).fadeOut(4000)
     $("#idDivStage").css('opacity', 1)
         .slideUp(2000)
         .animate(
-            {opacity: 0},
-            {queue: false, duration: 2000}
+            { opacity: 0 },
+            { queue: false, duration: 2000 }
         );
-    
+
     stageIsHidden = true;
- }
+}
