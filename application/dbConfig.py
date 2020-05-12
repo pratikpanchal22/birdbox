@@ -24,6 +24,9 @@ KEY_URL = 'url'
 KEY_LAST_INVOKED = 'last_invoked'
 KEY_ACTIVE = 'active'
 
+## 
+KEY_AUDIO_TYPE_VAL_SOUNDSCAPE = 'soundscape'
+
 ## Data access keys for Settings
 KEY_SETTINGS = 'settings'
 KEY_MOTION_TRIGGERS = 'motionTriggers'

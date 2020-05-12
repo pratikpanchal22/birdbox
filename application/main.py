@@ -44,7 +44,7 @@ class Models:
         self.modelType = modelType
         
         if(self.modelType == ModelType.ACTIVE_ENTRIES):
-            self.query = "SELECT "+dbc.KEY_ID+" FROM birdboxTable where "+dbc.KEY_ACTIVE+" = true;"
+            self.query = "SELECT "+dbc.KEY_ID+" FROM birdboxTable WHERE ("+dbc.KEY_ACTIVE+" = true AND "+dbc.KEY_AUDIO_TYPE+" != '"+dbc.KEY_AUDIO_TYPE_VAL_SOUNDSCAPE+"');"
         elif(self.modelType == ModelType.APP_SETTINGS):
             self.query = "SELECT "+dbc.KEY_LAST_UPDATED+", "+dbc.KEY_SETTINGS+" "+" FROM "+dbc.TABLE_SETTINGS+" ORDER BY "+dbc.KEY_ID+" DESC LIMIT 1;"
         elif(self.modelType == ModelType.LIST_OF_LOCATIONS):

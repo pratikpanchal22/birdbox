@@ -82,7 +82,7 @@ def fetchModel(modelType, *argv):
         return getActiveEntriesFromDb(dbConnection, TABLE_NAME)
     
     elif(modelType == ModelType.IDS_NAMES_AUDIOFILE_SORTED_BY_LAST_UPDATED_OLDEST_FIRST):
-        query = "SELECT "+dbc.KEY_ID+", "+dbc.KEY_NAME+", "+dbc.KEY_AUDIO_FILE+" FROM "+TABLE_NAME+" ORDER BY "+dbc.KEY_LAST_INVOKED+" ASC;"
+        query = "SELECT "+dbc.KEY_ID+", "+dbc.KEY_NAME+", "+dbc.KEY_AUDIO_FILE+" FROM "+TABLE_NAME+" WHERE "+dbc.KEY_AUDIO_TYPE+" != 'soundscape' ORDER BY "+dbc.KEY_LAST_INVOKED+" ASC;"
         return getQueryResultsAsList(dbConnection, TABLE_NAME, query)
     
     elif(modelType == ModelType.FOR_ID_SET_ACTIVE_UPDATE_TS):
