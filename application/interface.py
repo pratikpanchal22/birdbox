@@ -9,6 +9,7 @@ import json
 import dbConfig as dbc
 from dateutil import parser
 import datetime
+import time
 
 #TRIGGER TYPES
 class TriggerType(Enum):
@@ -204,6 +205,19 @@ def executeAudioFileOnSeparateThread(id, file):
     logger("_INFO_", "End of executeAudioFileOnSeparateThread for ", file, "id=", id)
     return    
 
+def processUpstageSoundscape(name):
+    d = models.fetchModel(models.ModelType.ID_FILE_FOR_NAME, name)[0]
+    
+    t = Thread(target=executeAudioFileOnSeparateThread, args=[d[dbc.KEY_ID], d[dbc.KEY_AUDIO_FILE]])
+    t.name = "thread_id_"+str(d[dbc.KEY_ID])
+    t.start()
+
+    while(t.isAlive()):
+        time.sleep(1.5)
+        logger("_INFO_", "Thread", t.name, "is running")
+
+    return
+
 def getCandidateAudioFiles(modelType, numberOfChannels):
     #print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
     if(numberOfChannels == 0):
@@ -311,6 +325,36 @@ def processTrigger(triggerType):
     else:
         print("unknown trigger type: ", triggerType)
 
+    return
+
+# This handler is called whenever saveSettings is called from client
+def settingsChangeHandler():
+    updateGlobalSettings()
+
+    m1 = models.fetchModel(models.ModelType.APP_SETTINGS)
+    logger("_INFO_", "\nLatest settings: id=", m1[0][dbc.KEY_ID])
+
+    m2 = models.fetchModel(models.ModelType.APP_SETTINGS_FOR_ID, m1[0][dbc.KEY_ID]-1)
+    logger("_INFO_", "Previous settings: id=", m2[0][dbc.KEY_ID])
+
+    sNew = json.loads(m1[0][dbc.KEY_SETTINGS])
+    sOld = json.loads(m2[0][dbc.KEY_SETTINGS])
+    logger("_INFO_", "Current Settings: ", sNew)
+    logger("_INFO_", "Previous Settings: ", sOld)
+
+    #This handler initiates any settings related triggers from here
+    if(sNew['continuousPlayback']['enabled'] == True and sOld['continuousPlayback']['enabled'] == False):
+        if(sNew['continuousPlayback']['ambience1'] != 'None'):
+            processUpstageSoundscape(sNew['continuousPlayback']['ambience1'])
+        if(sNew['continuousPlayback']['ambience2'] != 'None'):
+            processUpstageSoundscape(sNew['continuousPlayback']['ambience2'])
+    elif(sNew['continuousPlayback']['enabled'] == True and sOld['continuousPlayback']['enabled'] == True):
+        if(sNew['continuousPlayback']['ambience1'] != sOld['continuousPlayback']['ambience1']):
+            processUpstageSoundscape(sNew['continuousPlayback']['ambience1'])
+        if(sNew['continuousPlayback']['ambience2'] != sOld['continuousPlayback']['ambience2']):
+            processUpstageSoundscape(sNew['continuousPlayback']['ambience2'])
+
+    return
 
 if __name__ == "__main__":
     print("Error: Interface.py cannot be executed as a standalone python program")

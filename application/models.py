@@ -14,6 +14,8 @@ class ModelType(Enum):
     FOR_ID_UNSET_ACTIVE = 5
     UNSET_ACTIVE_FOR_DEAD_ENTRIES = 6
     APP_SETTINGS = 7
+    APP_SETTINGS_FOR_ID = 8
+    ID_FILE_FOR_NAME = 9
 
 TABLE_NAME = "birdboxTable"
 
@@ -98,9 +100,17 @@ def fetchModel(modelType, *argv):
         return performDbOperation(dbConnection, TABLE_NAME, query)
 
     elif(modelType == ModelType.APP_SETTINGS):
-        query = "SELECT "+dbc.KEY_LAST_UPDATED+", "+dbc.KEY_SETTINGS+" "+" FROM "+dbc.TABLE_SETTINGS+" ORDER BY "+dbc.KEY_ID+" DESC LIMIT 1;"
+        query = "SELECT "+dbc.KEY_ID+", "+dbc.KEY_LAST_UPDATED+", "+dbc.KEY_SETTINGS+" "+" FROM "+dbc.TABLE_SETTINGS+" ORDER BY "+dbc.KEY_ID+" DESC LIMIT 1;"
         return  getQueryResultsAsList(dbConnection, TABLE_NAME, query)
-    
+
+    elif(modelType == ModelType.APP_SETTINGS_FOR_ID):
+        query = "SELECT "+dbc.KEY_ID+", "+dbc.KEY_LAST_UPDATED+", "+dbc.KEY_SETTINGS+" "+" FROM "+dbc.TABLE_SETTINGS+" WHERE "+dbc.KEY_ID+" = " +str(argv[0])+";"
+        return  getQueryResultsAsList(dbConnection, TABLE_NAME, query)
+
+    elif(modelType == ModelType.ID_FILE_FOR_NAME):
+        query = "SELECT "+dbc.KEY_ID+", "+dbc.KEY_AUDIO_FILE+" FROM "+TABLE_NAME+" WHERE "+dbc.KEY_NAME+" = '"+str(argv[0])+"';"
+        return getQueryResultsAsList(dbConnection, TABLE_NAME, query)
+
     else:
         print("[Models] Error! Unknown/unsupported model type: ", modelType)
 

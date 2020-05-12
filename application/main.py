@@ -47,7 +47,7 @@ class Models:
         if(self.modelType == ModelType.ACTIVE_ENTRIES):
             self.query = "SELECT "+dbc.KEY_ID+" FROM birdboxTable WHERE ("+dbc.KEY_ACTIVE+" = true AND "+dbc.KEY_AUDIO_TYPE+" != '"+dbc.KEY_AUDIO_TYPE_VAL_SOUNDSCAPE+"');"
         elif(self.modelType == ModelType.APP_SETTINGS):
-            self.query = "SELECT "+dbc.KEY_LAST_UPDATED+", "+dbc.KEY_SETTINGS+" "+" FROM "+dbc.TABLE_SETTINGS+" ORDER BY "+dbc.KEY_ID+" DESC LIMIT 1;"
+            self.query = "SELECT "+dbc.KEY_ID+", "+dbc.KEY_LAST_UPDATED+", "+dbc.KEY_SETTINGS+" "+" FROM "+dbc.TABLE_SETTINGS+" ORDER BY "+dbc.KEY_ID+" DESC LIMIT 1;"
         elif(self.modelType == ModelType.LIST_OF_LOCATIONS):
             self.query = "SELECT DISTINCT "+dbc.KEY_LOCATION+" from birdboxTable;"
         elif(self.modelType == ModelType.LIST_OF_SOUNDSCAPES_FOR_LOC):
@@ -205,8 +205,11 @@ def saveSettings():
 
         #Push to database
         m = Models(mysql).push(ModelType.APP_SETTINGS, jsonStr)
-        print("settings saved. m=",m)
+        print("Settings saved. m=",m)
         print("************* END *************")
+
+        #Invoke settingsChange handler
+        interface.settingsChangeHandler()
 
     return(settings())
 
@@ -227,7 +230,8 @@ def settings():
     #data = fetchAppSettings()
     a = Models(mysql).fetch(ModelType.APP_SETTINGS)
     settings = a[0]
-    print("\nSettings: ",settings)
+    print("\nSettings fetched. id=", settings['id'])
+    print("Settings: ",settings)
     print("Type of settings: ", type(settings))
 
     print(settings['settings'])
