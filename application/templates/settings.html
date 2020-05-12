@@ -66,10 +66,10 @@
                             <label for="idAmbience1">• Ambience 1</label>
                         </div>
                         <div class="col-right-narrow">
-                            <select id="idAmbience1" name="continuousPlayback.ambience1" value={{ambience1}}>
-                                <option value="a0">None</option>
-                                <option value="a1">Ambience1</option>
-                                <option value="a2">Ambience2</option>
+                            <select id="idAmbience1" name="continuousPlayback.ambience1">
+                                {% for soundscape in ambientLocations %}
+                                <option value="{{soundscape['name']}}" {% if soundscape['name'] == ambience1 %}SELECTED{% endif %}>{{soundscape['name']}}</option>
+                                {% endfor %}
                             </select>
                         </div>
                     </div>
@@ -79,10 +79,10 @@
                             <label for="idAmbience2">• Ambience 2</label>
                         </div>
                         <div class="col-right-narrow">
-                            <select id="idAmbience2" name="continuousPlayback.ambience2" value={{ambience2}}>
-                                <option value="a0">None</option>
-                                <option value="a1">Ambience1</option>
-                                <option value="a2">Ambience2</option>
+                            <select id="idAmbience2" name="continuousPlayback.ambience2">
+                                {% for soundscape in ambientLocations %}
+                                <option value="{{soundscape['name']}}" {% if soundscape['name'] == ambience2 %}SELECTED{% endif %}>{{soundscape['name']}}</option>
+                                {% endfor %}
                             </select>
                         </div>
                     </div>

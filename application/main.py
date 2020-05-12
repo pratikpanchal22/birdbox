@@ -32,6 +32,7 @@ class ModelType(Enum):
     INFO_FOR_ID = 3
     APP_SETTINGS = 4
     LIST_OF_LOCATIONS = 5
+    LIST_OF_SOUNDSCAPES_FOR_LOC = 6
     #Push
 
 class Models:
@@ -49,6 +50,13 @@ class Models:
             self.query = "SELECT "+dbc.KEY_LAST_UPDATED+", "+dbc.KEY_SETTINGS+" "+" FROM "+dbc.TABLE_SETTINGS+" ORDER BY "+dbc.KEY_ID+" DESC LIMIT 1;"
         elif(self.modelType == ModelType.LIST_OF_LOCATIONS):
             self.query = "SELECT DISTINCT "+dbc.KEY_LOCATION+" from birdboxTable;"
+        elif(self.modelType == ModelType.LIST_OF_SOUNDSCAPES_FOR_LOC):
+            try:
+                loc = argv[0]
+            except:
+                print("ERROR: Expected location")
+                return
+            self.query = "SELECT "+dbc.KEY_NAME+" from birdboxTable WHERE ("+dbc.KEY_AUDIO_TYPE+" = '"+dbc.KEY_AUDIO_TYPE_VAL_SOUNDSCAPE+"' AND "+dbc.KEY_LOCATION+" = '"+loc+"');"
         elif(self.modelType == ModelType.METADATA_FOR_IDS):
             try:
                 comma_separated_ids = argv[0]
@@ -157,12 +165,13 @@ def saveSettings():
         print("\n\n *********** form data ******************")
         print("request.data: ", request.data)
         print("request.form: ", request.form)
-        if(request.form.get('cbSwitch')): print('cbSwitch checked')
-        if(request.form.get('upstageSwitch')): print('upstageSwitch checked')
-        if(request.form.get('mtEnabled')): print('mtEnabled checked')
-        if(request.form.get('symphonySwitch')): print('symphonySwitch checked')
-        if(request.form.get('symLimitToSame')): print('symLimitToSame checked')
-        if(request.form.get('silentPeriod')): print('silentPeriod checked')
+        
+        #if(request.form.get('cbSwitch')): print('cbSwitch checked')
+        #if(request.form.get('upstageSwitch')): print('upstageSwitch checked')
+        #if(request.form.get('mtEnabled')): print('mtEnabled checked')
+        #if(request.form.get('symphonySwitch')): print('symphonySwitch checked')
+        #if(request.form.get('symLimitToSame')): print('symLimitToSame checked')
+        #if(request.form.get('silentPeriod')): print('silentPeriod checked')
 
         for field in list(request.form):
             print(field, "=", request.form.get(field)) #.name, " ==== ", field.description, " ==== ", field.label.text, " ==== ", field.data)
@@ -249,8 +258,11 @@ def settings():
     landscapeLocations = Models(mysql).fetch(ModelType.LIST_OF_LOCATIONS)
     
     #Fetch options for 'ambience'
+    soundscapes = Models(mysql).fetch(ModelType.LIST_OF_SOUNDSCAPES_FOR_LOC, d['landscape'])
+    emptyItem = {'name' : 'None'}
+    soundscapes.insert(0, emptyItem)
+    print(soundscapes)
 
-    
     settingsTemplateData = {
         'last_updated' : settings['last_updated'],
         'landscape' : d['landscape'],
@@ -260,6 +272,7 @@ def settings():
         'ambienceEnabled' : d['continuousPlayback']['upStageEnabled'],
         'ambience1' : d['continuousPlayback']['ambience1'],
         'ambience2' : d['continuousPlayback']['ambience2'],
+        'ambientLocations' : soundscapes,
         'mtEnabled' : d['motionTriggers']['enabled'],
         'mtPeriod' : d['motionTriggers']['frequency'],
         'symphony' : d['symphony']['enabled'],
