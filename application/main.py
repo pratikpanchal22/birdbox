@@ -261,7 +261,12 @@ def settings():
     soundscapes = Models(mysql).fetch(ModelType.LIST_OF_SOUNDSCAPES_FOR_LOC, d['landscape'])
     emptyItem = {'name' : 'None'}
     soundscapes.insert(0, emptyItem)
-    print(soundscapes)
+    #print(soundscapes)
+
+    #Prepopulate endTime if continuousPlayback is disabled
+    if(d['continuousPlayback']['enabled'] == False):
+        defaultEndTime = datetime.datetime.now() + datetime.timedelta(minutes = 60) 
+        d['continuousPlayback']['endTime'] = defaultEndTime.strftime("%H:%M")
 
     settingsTemplateData = {
         'last_updated' : settings['last_updated'],
