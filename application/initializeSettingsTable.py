@@ -40,7 +40,7 @@ query_createTable1 = ("CREATE TABLE "+TABLE_NAME+" ( " +
 
 query_populateTable1 = ('INSERT INTO appSettings (settings) ' +
                       'VALUES ('+
-                      '\'{"landscape":"Rocky Mountain National Park","continuousPlayback":{"enabled":false,"endTime":"","upStageEnabled":false,"ambience1":"","ambience2":""},"motionTriggers":{"enabled":true,"frequency":1},"symphony":{"enabled":true,"maximum":4,"limitToSameType":false},"silentPeriod":{"enabled":"enabled","startTime":"19:00","endTime":"06:00"},"volume":20}\''
+                      '\'{"landscape":"Rocky Mountain National Park","continuousPlayback":{"enabled":false,"endTime":"","upStageEnabled":false,"ambience1":"None","ambience2":"None"},"motionTriggers":{"enabled":true,"frequency":1},"symphony":{"enabled":true,"maximum":4,"limitToSameType":false},"silentPeriod":{"enabled":"enabled","startTime":"19:00","endTime":"06:00"},"volume":20}\''
                       ');')
 
 cursor = db.cursor()
