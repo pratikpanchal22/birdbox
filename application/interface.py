@@ -10,6 +10,7 @@ import dbConfig as dbc
 from dateutil import parser
 import datetime
 import time
+from AudioThread import AudioThread as at
 
 #TRIGGER TYPES
 class TriggerType(Enum):
@@ -27,6 +28,8 @@ class CandidateSelectionModels(Enum):
 #GLOBALS - TODO: Move to persistent storage
 randomizeNumberOfChannels = True #TODO: get this from settings
 appSettings = ""
+ambientAudioChannel1 = None
+ambientAudioChannel2 = None
 
 def updateGlobalSettings():
     global appSettings
@@ -205,19 +208,6 @@ def executeAudioFileOnSeparateThread(id, file):
     logger("_INFO_", "End of executeAudioFileOnSeparateThread for ", file, "id=", id)
     return    
 
-def processUpstageSoundscape(name):
-    d = models.fetchModel(models.ModelType.ID_FILE_FOR_NAME, name)[0]
-    
-    t = Thread(target=executeAudioFileOnSeparateThread, args=[d[dbc.KEY_ID], d[dbc.KEY_AUDIO_FILE]])
-    t.name = "thread_id_"+str(d[dbc.KEY_ID])
-    t.start()
-
-    while(t.isAlive()):
-        time.sleep(1.5)
-        logger("_INFO_", "Thread", t.name, "is running")
-
-    return
-
 def getCandidateAudioFiles(modelType, numberOfChannels):
     #print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
     if(numberOfChannels == 0):
@@ -345,16 +335,38 @@ def settingsChangeHandler():
     #This handler initiates any settings related triggers from here
     if(sNew['continuousPlayback']['enabled'] == True and sOld['continuousPlayback']['enabled'] == False):
         if(sNew['continuousPlayback']['ambience1'] != 'None'):
-            processUpstageSoundscape(sNew['continuousPlayback']['ambience1'])
+            processUpstageSoundscape(ambientAudioChannel1, sNew['continuousPlayback']['ambience1'])
         if(sNew['continuousPlayback']['ambience2'] != 'None'):
-            processUpstageSoundscape(sNew['continuousPlayback']['ambience2'])
+            processUpstageSoundscape(ambientAudioChannel2, sNew['continuousPlayback']['ambience2'])
     elif(sNew['continuousPlayback']['enabled'] == True and sOld['continuousPlayback']['enabled'] == True):
         if(sNew['continuousPlayback']['ambience1'] != sOld['continuousPlayback']['ambience1']):
-            processUpstageSoundscape(sNew['continuousPlayback']['ambience1'])
+            processUpstageSoundscape(ambientAudioChannel1, sNew['continuousPlayback']['ambience1'])
         if(sNew['continuousPlayback']['ambience2'] != sOld['continuousPlayback']['ambience2']):
-            processUpstageSoundscape(sNew['continuousPlayback']['ambience2'])
+            processUpstageSoundscape(ambientAudioChannel2, sNew['continuousPlayback']['ambience2'])
 
     return
 
+def processUpstageSoundscape(ch, name):
+    d = models.fetchModel(models.ModelType.ID_FILE_FOR_NAME, name)[0]
+    
+    #t = Thread(target=executeAudioFileOnSeparateThread, args=[d[dbc.KEY_ID], d[dbc.KEY_AUDIO_FILE]])
+    #t.name = "thread_id_"+str(d[dbc.KEY_ID])
+    #t.start()
+    basePath = "/home/pratikpanchal/virtualSandbox/birdbox/application/static/sounds/"
+
+    if(ch == None or ch.isAlive() == False):
+        #start new
+        ch = at(fp=basePath+d[dbc.KEY_AUDIO_FILE], terminateAt="11:45") 
+        ch.start() 
+    #else:
+        #update existing
+
+    while(ch.isAlive()):
+        time.sleep(1.5)
+        logger("_INFO_", "Thread", ch.name, "is running since", ch.runTime())
+
+    return
+
+###################################################################################
 if __name__ == "__main__":
     print("Error: Interface.py cannot be executed as a standalone python program")

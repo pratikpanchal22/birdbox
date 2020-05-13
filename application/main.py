@@ -11,6 +11,7 @@ import interface as interface
 import utilities as u
 import ast
 from enum import Enum
+from interface import logger
 
 app = Flask(__name__)
 
@@ -209,9 +210,22 @@ def saveSettings():
         print("************* END *************")
 
         #Invoke settingsChange handler
-        interface.settingsChangeHandler()
+        #interface.settingsChangeHandler()
+        #Alternate solution
+        #if(ambientSoundscapeThread == None or ambientSoundscapeThread.isAlive() == False):
+        interface.logger("_INFO_", "Assigning ambientSoundscapeThread")
+        ambientSoundscapeThread = Thread(target=startAmbientSoundscapeThread, args=[1, 4])
+        ambientSoundscapeThread.name = "ambientSoundScapeThread"
+        ambientSoundscapeThread.start()
+        #else:
+        #    logger("_INFO_", "Thread ", ambientSoundscapeThread.name, "Alive")
 
     return(settings())
+
+def startAmbientSoundscapeThread(var1, var2):
+    interface.settingsChangeHandler()
+    logger("_INFO_", "ambientSoundscapeThread ending")
+    return
 
 @app.route("/settings.html", methods=['post', 'get'])
 def settings():
