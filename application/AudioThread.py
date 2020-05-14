@@ -16,6 +16,7 @@ class AudioThread(threading.Thread):
         self._pCurrent = None
         self._pNext = None
         self._rerun = True
+        self._repeat = True
         self._pbStartTime = 0
         self._pbStartTimeStatic = 0
         self._futureTerminationCallback = None
@@ -72,13 +73,14 @@ class AudioThread(threading.Thread):
         logger("_INFO_", "\na.run")
         self._pbStartTimeStatic = time.monotonic()
 
-        self._pbStartTime = round(time.monotonic() * 1000)
-        logger("_INFO_", "Start time: ", self._pbStartTime)
-        self._pCurrent = subprocess.Popen("exec " + self.__command(), stdout=subprocess.PIPE, shell=True)
+        self.__startSelf()
         while self._rerun == True:
             self._pCurrent.wait()
             if(self._pNext == None):
-                self._rerun = False
+                if(self._repeat == True):
+                    self.__startSelf()
+                else:
+                    self._rerun = False
             else:
                 self._pCurrent = self._pNext
                 self._pNext = None
@@ -97,15 +99,7 @@ class AudioThread(threading.Thread):
         if(self.vol != volume):
             logger("_INFO_", "Changing vol to:", volume)    
             self.vol = volume
-            self.__switchTrack()
-        return
-
-    def changeFile(self, fp):
-        if(fp != self.fp):
-            logger("_INFO_", "Changing file to:", fp)
-            self.fp = fp
-            self._pbStartTime = round(time.monotonic() * 1000)
-            self.__switchTrack()
+            self.__atSameFrameSwitchTrack()
         return
 
     def setFutureTerminationTime(self, terminationTime):
@@ -149,11 +143,26 @@ class AudioThread(threading.Thread):
             self._futureTerminationCallback.cancel()
         return
 
+    def changeFile(self, fp):
+        if(fp != self.fp):
+            logger("_INFO_", "Changing file to:", fp)
+            self.fp = fp
+            self._pbStartTime = round(time.monotonic() * 1000)
+            self.__atSameFrameSwitchTrack()
+        return
+
+    def __startSelf(self):
+        self._pbStartTime = round(time.monotonic() * 1000)
+        logger("_INFO_", "Start time: ", self._pbStartTime, datetime.now())
+        logger("_INFO_", "Command: ", self.__command())
+        self._pCurrent = subprocess.Popen("exec " + self.__command(), stdout=subprocess.PIPE, shell=True)
+        return
+
     def __command(self):
         return "mpg321 --gain "+str(self.vol)+" -q -k " +str(self.startingFrame)+ " " + self.fp
 
-    def __switchTrack(self):
-        logger("_INFO_", "a.run: Running with cmd: ", self.__command())            
+    def __atSameFrameSwitchTrack(self):
+        logger("_INFO_", "Running with cmd: ", self.__command())            
         #Compute new frame
         self.startingFrame = round((round(time.monotonic() * 1000) - self._pbStartTime) * self.framePerMs)        
         self._pNext = subprocess.Popen("exec " + self.__command(), stdout=subprocess.PIPE, shell=True)
