@@ -1,4 +1,7 @@
 
+glPushSettingsOnNextIteration = false;
+glReadyForNextPush = true;
+
 $(document).ready(function () {
     if (!jQuery) {
         // jQuery is not loaded
@@ -79,6 +82,7 @@ function initializations() {
     var amb1Slide = document.getElementById('idAmb1VolumeSlider');
     amb1Slide.oninput = function () {
         document.getElementById('idAmb1VolVal').innerHTML = this.value + "%";
+        flagToPushSettings();
     }
 
     var amb2Slide = document.getElementById('idAmb2VolumeSlider');
@@ -95,6 +99,35 @@ function initializations() {
     document.getElementById("idForm").action = "saveSettings.json?t="+Math.floor(Date.now()/1000);
 
     return;
+}
+
+function flagToPushSettings(){
+    console.log("flag to push settings");
+    glPushSettingsOnNextIteration = true;
+
+    if(glReadyForNextPush){
+        pushSettings();
+    }
+}
+
+function pushSettings(){
+    console.log("Push settings");
+    if(glPushSettingsOnNextIteration == false){
+        return;
+    }
+
+    glPushSettingsOnNextIteration = false;
+    glReadyForNextPush = false;
+
+    $.post("saveSettingsLive.json?t="+ Math.floor(Date.now() / 1000), 
+                $('#idForm').serialize(), function(data, textStatus){
+                    console.log("Response status: " + textStatus);
+                    console.log("Received response: " + data);
+                    setTimeout(function(){
+                        glReadyForNextPush = true;
+                        pushSettings();
+                    }, 1000);
+                });
 }
 
 function setCompositeVisibilityAndStates1(){

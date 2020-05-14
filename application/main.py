@@ -155,6 +155,28 @@ def infoPage():
     #Pass to template Data
     return render_template('infoPage.html', **templateData)
 
+@app.route("/saveSettingsLive.json", methods=['post', 'get'])
+def saveSettingsLive():
+    ts = str(int(time.time()))
+    response = {
+        "state":"successful",
+        "ts": ts
+    }
+
+    if(request.method == 'POST'):
+        print("\n\n *********** SAVESETTINGSLIVE data ******************")
+        print("request.data: ", request.data)
+        print("request.form: ", request.form)
+        
+        if(request.form.get('cbSwitch')): print('cbSwitch checked')
+        if(request.form.get('upstageSwitch')): print('upstageSwitch checked')
+        if(request.form.get('mtEnabled')): print('mtEnabled checked')
+        if(request.form.get('symphonySwitch')): print('symphonySwitch checked')
+        if(request.form.get('symLimitToSame')): print('symLimitToSame checked')
+        if(request.form.get('silentPeriod')): print('silentPeriod checked')
+
+    return jsonify(response)
+
 @app.route("/saveSettings.json", methods=['post', 'get'])
 def saveSettings():
 
