@@ -239,8 +239,6 @@ def settings():
 
     #print(settings['settings'])
     s = settings['settings']
-    lu = settings['last_updated']
-    #print(lu)
     #print("Type of s: ", type(s))
     d = json.loads(s)
     #print("Type of d: ", type(d))
