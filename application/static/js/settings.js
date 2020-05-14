@@ -43,8 +43,21 @@ function initializations() {
         setVisibility(idDivSubContentCb, document.getElementById("idCbSwitch").checked);
     });
 
+    $("#idBirdsSwitch").change(function () {
+        setCompositeVisibilityAndStates1()
+    });
+
     $("#idUpstageSwitch").change(function () {
         setVisibility(idDivSubContentUpstage, document.getElementById("idUpstageSwitch").checked);
+        setCompositeVisibilityAndStates1()
+    });
+
+    $("#idAmbience1").on('change', function(){
+        setCompositeVisibilityAndStates2();
+    });
+
+    $("#idAmbience2").on('change', function(){
+        setCompositeVisibilityAndStates2();
     });
 
     $("#idMotionSwitch").change(function () {
@@ -63,16 +76,39 @@ function initializations() {
         $("#idVolVal").text($("#idVolumeSlider").val() + "%");
     });*/
 
+    var amb1Slide = document.getElementById('idAmb1VolumeSlider');
+    amb1Slide.oninput = function () {
+        document.getElementById('idAmb1VolVal').innerHTML = this.value + "%";
+    }
+
+    var amb2Slide = document.getElementById('idAmb2VolumeSlider');
+    amb2Slide.oninput = function () {
+        document.getElementById('idAmb2VolVal').innerHTML = this.value + "%";
+    }
+
     var slide = document.getElementById('idVolumeSlider');
-    var VolVal = document.getElementById('idVolVal');
     slide.oninput = function () {
-        VolVal.innerHTML = this.value + "%";
+        document.getElementById('idVolVal').innerHTML = this.value + "%";
     }
    
     //Set form submit action listener
     document.getElementById("idForm").action = "saveSettings.json?t="+Math.floor(Date.now()/1000);
 
     return;
+}
+
+function setCompositeVisibilityAndStates1(){
+    if(document.getElementById("idBirdsSwitch").checked == false && document.getElementById("idUpstageSwitch").checked == false){
+        setVisibility(idDivSubContentCb, false);
+        document.getElementById("idCbSwitch").checked = false;
+    }
+}
+
+function setCompositeVisibilityAndStates2(){
+    if(document.getElementById("idAmbience1").value == 'None' && document.getElementById("idAmbience2").value == 'None'){
+        setVisibility(idDivSubContentUpstage, false);
+        document.getElementById("idUpstageSwitch").checked = false;
+    }
 }
 
 function hideSubContent(divId) {

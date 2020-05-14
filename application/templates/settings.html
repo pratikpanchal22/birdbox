@@ -1,212 +1,257 @@
 {% extends "layout.html" %}
 {% block content %}
 
-    <div class="container">
-        <form id="idForm", method="post">
+<div class="container">
+    <form id="idForm" , method="post">
 
-            <center>
-                <h2>Settings</h2>
-                <h6>Last updated on {{last_updated}}</h6>
-            </center>
+        <center>
+            <h2>Settings</h2>
+            <h6>Last updated on {{last_updated}} (server time)</h6>
+        </center>
 
-            <div class="row">
-                <div class="col-left">
-                    <label for="idLandscape" id="idLabelLandscape" class="majorLabel">Landscape</label>
-                </div>
-                <div class="col-right">
-                    <select id="idLandscape" name="landscape">
-                        <!--option value="RMNP">Rocky Mountain National Park, Colorado</option>
+        <div class="row">
+            <div class="col-left">
+                <label for="idLandscape" id="idLabelLandscape" class="majorLabel">Landscape</label>
+            </div>
+            <div class="col-right">
+                <select id="idLandscape" name="landscape">
+                    <!--option value="RMNP">Rocky Mountain National Park, Colorado</option>
                         <option value="YNP">Yellowstone National Park, Wyoming</option-->
-                        {% for loc in landscapeLocations %}
-                        <option value="{{loc['location']}}" {% if loc['location'] == landscape %}SELECTED{% endif %}>{{loc['location']}}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+                    {% for loc in landscapeLocations %}
+                    <option value="{{loc['location']}}" {% if loc['location'] == landscape %}SELECTED{% endif %}>
+                        {{loc['location']}}</option>
+                    {% endfor %}
+                </select>
             </div>
-            <br>
-            <hr>
+        </div>
+        <br>
+        <hr>
+
+        <div class="row">
+            <div class="col-left-fc">
+                <label for="idCbSwitch" class="majorLabel">Continuous playback</label>
+            </div>
+            <div class="col-right-narrow">
+                <label class="switch">
+                    <input type="checkbox" id="idCbSwitch" name="continuousPlayback.enabled"
+                        {% if cbEnabled %}checked{% endif %}>
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="subContent" id="idDivSubContentCb">
 
             <div class="row">
-                <div class="col-left-fc">
-                    <label for="idCbSwitch" class="majorLabel">Continuous playback</label>
+                <div class="col-left-indented-2lines">
+                    <label>• Birds</label>
                 </div>
                 <div class="col-right-narrow">
                     <label class="switch">
-                        <input type="checkbox" id="idCbSwitch" name="continuousPlayback.enabled" {% if cbEnabled %}checked{% endif %}>
+                        <input type="checkbox" id="idBirdsSwitch" name="continuousPlayback.birds"
+                            {% if ambienceEnabled %}checked{% endif %}>
                         <span class="slider round"></span>
                     </label>
                 </div>
             </div>
 
-            <div class="subContent" id="idDivSubContentCb">
+            <div class="row">
+                <div class="col-left-indented-2lines">
+                    <label>• Ambient Soundscape</label>
+                </div>
+                <div class="col-right-narrow">
+                    <label class="switch">
+                        <input type="checkbox" id="idUpstageSwitch" name="continuousPlayback.upStageEnabled"
+                            {% if ambienceEnabled %}checked{% endif %}>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="subContent" id="idDivSubContentUpstage">
                 <div class="row">
                     <div class="col-left-indented">
-                        <label for="idCbEndtime">• Time to stop playing at</label>
-                    </div>
-                    <div class="col-right-narrow" id="idTimeout">
-                        <input type="time" id="idCbEndtime" name="continuousPlayback.endTime" min="00:00" max="23:59" value={{cbEndTime}}>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-left-indented-2lines">
-                        <label>• Enable Upstage</label>
+                        <label for="idAmbience1">• Soundscape #1</label>
                     </div>
                     <div class="col-right-narrow">
-                        <label class="switch">
-                            <input type="checkbox" id="idUpstageSwitch" name="continuousPlayback.upStageEnabled" {% if ambienceEnabled %}checked{% endif %}>
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="subContent" id="idDivSubContentUpstage">
-                    <div class="row">
-                        <div class="col-left-indented">
-                            <label for="idAmbience1">• Ambience 1</label>
-                        </div>
-                        <div class="col-right-narrow">
-                            <select id="idAmbience1" name="continuousPlayback.ambience1">
-                                {% for soundscape in ambientLocations %}
-                                <option value="{{soundscape['name']}}" {% if soundscape['name'] == ambience1 %}SELECTED{% endif %}>{{soundscape['name']}}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-left-indented">
-                            <label for="idAmbience2">• Ambience 2</label>
-                        </div>
-                        <div class="col-right-narrow">
-                            <select id="idAmbience2" name="continuousPlayback.ambience2">
-                                {% for soundscape in ambientLocations %}
-                                <option value="{{soundscape['name']}}" {% if soundscape['name'] == ambience2 %}SELECTED{% endif %}>{{soundscape['name']}}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <hr>
-
-            <div class="row">
-                <div class="col-left-fc">
-                    <label class="majorLabel">Motion based triggers</label>
-                </div>
-                <div class="col-right-narrow">
-                    <label class="switch">
-                        <input type="checkbox" id="idMotionSwitch" name="motionTriggers.enabled" {% if mtEnabled %}checked{% endif %}>
-                        <span class="slider round"></span>
-                    </label>
-                </div>
-            </div>
-
-            <div class="subContent" id="idDivSubContentMotion">
-                <div class="row">
-                    <div class="col-left-indented-2lines">
-                        <label for="idTimeout">• Minutes to wait in between</label>
-                    </div>
-                    <div class="col-right-narrow">
-                        <input type="number" name="motionTriggers.frequency" min="0" max="60" value={{mtPeriod}}>
-                    </div>
-                </div>
-            </div>
-            <hr>
-
-
-            <div class="row">
-                <div class="col-left-fc">
-                    <label class="majorLabel">Bird symphony</label>
-                </div>
-                <div class="col-right-narrow">
-                    <label class="switch">
-                        <input type="checkbox" id="idSymphonySwitch" name="symphony.enabled" {% if symphony %}checked{% endif %}>
-                        <span class="slider round"></span>
-                    </label>
-                </div>
-            </div>
-
-            <div class="subContent" id="idDivSubContentSymphony">
-                <div class="row">
-                    <div class="col-left-indented-2lines">
-                        <label>• Maximum number of birds in symphony</label>
-                    </div>
-                    <div class="col-right-narrow">
-                        <input type="number" name="symphony.maximum" min="1" max="5" value={{symMaxBirds}}>
+                        <select id="idAmbience1" name="continuousPlayback.ambience1">
+                            {% for soundscape in ambientLocations %}
+                            <option value="{{soundscape['name']}}"
+                                {% if soundscape['name'] == ambience1 %}SELECTED{% endif %}>{{soundscape['name']}}
+                            </option>
+                            {% endfor %}
+                        </select>
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-left-indented-2lines">
-                        <label>• Limit to same bird type</label>
+                    <div style="width: 75%; float: left; display: inline-block; margin-top: 12px">
+                        <input id="idAmb1VolumeSlider" style="width: 100%" type="range" min="1" max="100" name="volume" value="{{amb1Volume}}">
                     </div>
-                    <div class="col-right-narrow">
-                        <label class="switch">
-                            <input type="checkbox" name="symphony.limitToSameType" {% if symLimitToSame %}checked{% endif %}>
-                            <span class="slider round"></span>
-                        </label>
+                    <div style="width: 25%; float: right; display: inline-block; height: 25px; ">
+                        <p style="float: right;" id="idAmb1VolVal">{{amb1Volume}}</p>
                     </div>
                 </div>
-            </div>
-            <hr>
-
-
-            <div class="row">
-                <div class="col-left-fc">
-                    <label class="majorLabel">Silent period</label>
-                </div>
-                <div class="col-right-narrow">
-                    <label class="switch">
-                        <input type="checkbox" id="idSilentPeriodSwitch" name="silentPeriod.enabled" {% if silentPeriod %}checked{% endif %}>
-                        <span class="slider round"></span>
-                    </label>
-                </div>
-            </div>
-
-            <div class="subContent" id="idDivSubContentSilentPeriod">
-                <div class="row">
-                    <div class="col-left-indented">
-                        <label>• Start time</label>
-                    </div>
-                    <div class="col-right-narrow">
-                        <input type="time" min="00:00" max="23:59" name="silentPeriod.startTime" value={{spStartTime}}>
-                    </div>
-                </div>
+                <br>
 
                 <div class="row">
                     <div class="col-left-indented">
-                        <label>• End time</label>
+                        <label for="idAmbience2">• Soundscape #2</label>
                     </div>
                     <div class="col-right-narrow">
-                        <input type="time" min="00:00" max="23:59" name="silentPeriod.endTime" value={{spEndTime}}>
+                        <select id="idAmbience2" name="continuousPlayback.ambience2">
+                            {% for soundscape in ambientLocations %}
+                            <option value="{{soundscape['name']}}"
+                                {% if soundscape['name'] == ambience2 %}SELECTED{% endif %}>{{soundscape['name']}}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div style="width: 75%; float: left; display: inline-block; margin-top: 12px">
+                        <input id="idAmb2VolumeSlider" style="width: 100%" type="range" min="1" max="100" name="volume" value="{{amb2Volume}}">
+                    </div>
+                    <div style="width: 25%; float: right; display: inline-block; height: 25px; ">
+                        <p style="float: right;" id="idAmb2VolVal">{{amb2Volume}}</p>
                     </div>
                 </div>
             </div>
-            <hr>
 
             <div class="row">
-                <div class="col-left-fc">
-                    <label class="majorLabel">Volume</label>
+                <div class="col-left-indented">
+                    <label for="idCbEndtime">• Time to stop playing at</label>
+                </div>
+                <div class="col-right-narrow" id="idTimeout">
+                    <input type="time" id="idCbEndtime" name="continuousPlayback.endTime" min="00:00" max="23:59"
+                        value={{cbEndTime}}>
+                </div>
+            </div>
+
+        </div>
+        <hr>
+
+        <div class="row">
+            <div class="col-left-fc">
+                <label class="majorLabel">Motion based triggers</label>
+            </div>
+            <div class="col-right-narrow">
+                <label class="switch">
+                    <input type="checkbox" id="idMotionSwitch" name="motionTriggers.enabled"
+                        {% if mtEnabled %}checked{% endif %}>
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="subContent" id="idDivSubContentMotion">
+            <div class="row">
+                <div class="col-left-indented-2lines">
+                    <label for="idTimeout">• Minutes to wait in between</label>
                 </div>
                 <div class="col-right-narrow">
-                    <p id="idVolVal">{{volume}}%</p>
+                    <input type="number" name="motionTriggers.frequency" min="0" max="60" value={{mtPeriod}}>
+                </div>
+            </div>
+        </div>
+        <hr>
+
+
+        <div class="row">
+            <div class="col-left-fc">
+                <label class="majorLabel">Bird symphony</label>
+            </div>
+            <div class="col-right-narrow">
+                <label class="switch">
+                    <input type="checkbox" id="idSymphonySwitch" name="symphony.enabled"
+                        {% if symphony %}checked{% endif %}>
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="subContent" id="idDivSubContentSymphony">
+            <div class="row">
+                <div class="col-left-indented-2lines">
+                    <label>• Maximum number of birds in symphony</label>
+                </div>
+                <div class="col-right-narrow">
+                    <input type="number" name="symphony.maximum" min="1" max="5" value={{symMaxBirds}}>
                 </div>
             </div>
             <div class="row">
-                <div>
-                    <input id="idVolumeSlider" style="width: 75%; float: right;" type="range" min="1" max="100" name="volume" value="{{volume}}">
+                <div class="col-left-indented-2lines">
+                    <label>• Limit to same bird type</label>
+                </div>
+                <div class="col-right-narrow">
+                    <label class="switch">
+                        <input type="checkbox" name="symphony.limitToSameType"
+                            {% if symLimitToSame %}checked{% endif %}>
+                        <span class="slider round"></span>
+                    </label>
                 </div>
             </div>
-            <hr>
+        </div>
+        <hr>
 
-            <br>
+
+        <div class="row">
+            <div class="col-left-fc">
+                <label class="majorLabel">Silent period</label>
+            </div>
+            <div class="col-right-narrow">
+                <label class="switch">
+                    <input type="checkbox" id="idSilentPeriodSwitch" name="silentPeriod.enabled"
+                        {% if silentPeriod %}checked{% endif %}>
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="subContent" id="idDivSubContentSilentPeriod">
             <div class="row">
-                <input type="submit" value="Save">
+                <div class="col-left-indented">
+                    <label>• Start time</label>
+                </div>
+                <div class="col-right-narrow">
+                    <input type="time" min="00:00" max="23:59" name="silentPeriod.startTime" value={{spStartTime}}>
+                </div>
             </div>
 
+            <div class="row">
+                <div class="col-left-indented">
+                    <label>• End time</label>
+                </div>
+                <div class="col-right-narrow">
+                    <input type="time" min="00:00" max="23:59" name="silentPeriod.endTime" value={{spEndTime}}>
+                </div>
+            </div>
+        </div>
+        <hr>
+
+        <div class="row">
+            <div class="col-left-fc">
+                <label class="majorLabel">System volume (aggregated)</label>
+            </div>
+            <div class="col-right-narrow">
+                <p id="idVolVal">{{volume}}%</p>
+            </div>
+        </div>
+        <div class="row">
+            <div>
+                <input id="idVolumeSlider" style="width: 75%; float: right;" type="range" min="1" max="100"
+                    name="volume" value="{{volume}}">
+            </div>
+        </div>
+        <hr>
+
+        <br>
+        <div class="row">
+            <input type="submit" value="Save">
+        </div>
 
 
-            <!--div class="row">
+
+        <!--div class="row">
                 <label class="subLabelTableCell">Volume</label>
                 </p>
                 <div class="row">
@@ -215,6 +260,6 @@
             </div>
             <br><br-->
 
-        </form>
-    </div>
-{% endblock %}  
+    </form>
+</div>
+{% endblock %}
