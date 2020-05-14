@@ -210,22 +210,11 @@ def saveSettings():
         print("************* END *************")
 
         #Invoke settingsChange handler
-        #interface.settingsChangeHandler()
-        #Alternate solution
-        #if(ambientSoundscapeThread == None or ambientSoundscapeThread.isAlive() == False):
-        interface.logger("_INFO_", "Assigning ambientSoundscapeThread")
-        ambientSoundscapeThread = Thread(target=startAmbientSoundscapeThread, args=[1, 4])
+        ambientSoundscapeThread = Thread(target=interface.settingsChangeHandler(), args=[1, 4])
         ambientSoundscapeThread.name = "ambientSoundScapeThread"
         ambientSoundscapeThread.start()
-        #else:
-        #    logger("_INFO_", "Thread ", ambientSoundscapeThread.name, "Alive")
 
     return(settings())
-
-def startAmbientSoundscapeThread(var1, var2):
-    interface.settingsChangeHandler()
-    logger("_INFO_", "ambientSoundscapeThread ending")
-    return
 
 @app.route("/settings.html", methods=['post', 'get'])
 def settings():
@@ -244,33 +233,33 @@ def settings():
     #data = fetchAppSettings()
     a = Models(mysql).fetch(ModelType.APP_SETTINGS)
     settings = a[0]
-    print("\nSettings fetched. id=", settings['id'])
-    print("Settings: ",settings)
-    print("Type of settings: ", type(settings))
+    #print("\nSettings fetched. id=", settings['id'])
+    #print("Settings: ",settings)
+    #print("Type of settings: ", type(settings))
 
-    print(settings['settings'])
+    #print(settings['settings'])
     s = settings['settings']
     lu = settings['last_updated']
-    print(lu)
-    print("Type of s: ", type(s))
+    #print(lu)
+    #print("Type of s: ", type(s))
     d = json.loads(s)
-    print("Type of d: ", type(d))
+    #print("Type of d: ", type(d))
 
     #print(settings['settings']['continuousPlayback']['enabled'])
-    print(d['landscape'])
-    print(d['continuousPlayback']['enabled'])
-    print(d['continuousPlayback']['endTime'])
-    print(d['continuousPlayback']['ambience1'])
-    print(d['continuousPlayback']['ambience2'])
-    print(d['motionTriggers']['enabled'])
-    print(d['motionTriggers']['frequency'])
-    print(d['symphony']['enabled'])
-    print(d['symphony']['maximum'])
-    print(d['symphony']['limitToSameType'])
-    print(d['silentPeriod']['enabled'])
-    print(d['silentPeriod']['startTime'])
-    print(d['silentPeriod']['endTime'])
-    print(d['volume'])
+    #print(d['landscape'])
+    #print(d['continuousPlayback']['enabled'])
+    #print(d['continuousPlayback']['endTime'])
+    #print(d['continuousPlayback']['ambience1'])
+    #print(d['continuousPlayback']['ambience2'])
+    #print(d['motionTriggers']['enabled'])
+    #print(d['motionTriggers']['frequency'])
+    #print(d['symphony']['enabled'])
+    #print(d['symphony']['maximum'])
+    #print(d['symphony']['limitToSameType'])
+    #print(d['silentPeriod']['enabled'])
+    #print(d['silentPeriod']['startTime'])
+    #print(d['silentPeriod']['endTime'])
+    #print(d['volume'])
 
     #Fetch options for 'landscape'
     landscapeLocations = Models(mysql).fetch(ModelType.LIST_OF_LOCATIONS)
@@ -342,7 +331,7 @@ def onStage():
     
     t = request.args.get("t")
 
-    print("local ts=",ts," t=",t," diff=",int(ts)-int(t))
+    #print("local ts=",ts," t=",t," diff=",int(ts)-int(t))
 
     jsonObj = {
         "state":"unknown",
@@ -387,7 +376,7 @@ def idData():
     #for id in ids:
     #    print ("id: ",id)
 
-    print("local ts=",ts," t=",t," diff=",int(ts)-int(t))
+    #print("local ts=",ts," t=",t," diff=",int(ts)-int(t))
 
     jsonObj = {
         "state":"unknown",
@@ -401,7 +390,7 @@ def idData():
         return jsonify(jsonObj)
 
     entries = Models(mysql).fetch(ModelType.METADATA_FOR_IDS, comma_separated_ids)
-    print("\n\nConverting entries to JSON:")
+    print("\nConverting entries to JSON:")
     print(json.dumps(entries, cls=u.DateTimeEncoder))
 
     if(len(entries)==0):

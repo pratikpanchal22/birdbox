@@ -319,6 +319,7 @@ def processTrigger(triggerType):
 
 # This handler is called whenever saveSettings is called from client
 def settingsChangeHandler():
+    global ambientAudioChannel1, ambientAudioChannel2
     updateGlobalSettings()
 
     m1 = models.fetchModel(models.ModelType.APP_SETTINGS)
@@ -332,39 +333,94 @@ def settingsChangeHandler():
     logger("_INFO_", "Current Settings: ", sNew)
     logger("_INFO_", "Previous Settings: ", sOld)
 
-    #This handler initiates any settings related triggers from here
-    if(sNew['continuousPlayback']['enabled'] == True and sOld['continuousPlayback']['enabled'] == False):
-        if(sNew['continuousPlayback']['ambience1'] != 'None'):
-            processUpstageSoundscape(ambientAudioChannel1, sNew['continuousPlayback']['ambience1'])
-        if(sNew['continuousPlayback']['ambience2'] != 'None'):
-            processUpstageSoundscape(ambientAudioChannel2, sNew['continuousPlayback']['ambience2'])
-    elif(sNew['continuousPlayback']['enabled'] == True and sOld['continuousPlayback']['enabled'] == True):
-        if(sNew['continuousPlayback']['ambience1'] != sOld['continuousPlayback']['ambience1']):
-            processUpstageSoundscape(ambientAudioChannel1, sNew['continuousPlayback']['ambience1'])
-        if(sNew['continuousPlayback']['ambience2'] != sOld['continuousPlayback']['ambience2']):
-            processUpstageSoundscape(ambientAudioChannel2, sNew['continuousPlayback']['ambience2'])
+    for ambience in ['ambience1', 'ambience2']:
+
+        ambientAudioChannel = ""
+        if(ambience == 'ambience1'): 
+            ambientAudioChannel = 'ambientAudioChannel1'
+        elif(ambience == 'ambience2'):
+            ambientAudioChannel = 'ambientAudioChannel2'
+        else:
+            continue
+
+        #Case 1: Continuous playback/upstage was turned OFF
+        if((sNew['continuousPlayback']['enabled'] == False or sNew['continuousPlayback']['upStageEnabled'] == False) and
+            (sOld['continuousPlayback']['enabled'] == True and sOld['continuousPlayback']['upStageEnabled'] == True)):
+            processUpstageSoundscape(ambientAudioChannel, terminate=True)
+            continue
+
+        #Case 2: Continuous playback/upstage was turned ON or MODIFIED or UNMODIFIED
+        if(sNew['continuousPlayback']['enabled'] == True and sNew['continuousPlayback']['upStageEnabled'] == True):
+            #Collect new settings into a dictionary:
+            newAtSettings = {
+                'name': sNew['continuousPlayback'][ambience],
+                'endTime': sNew['continuousPlayback']['endTime'],
+                'vol' : 100, #TODO: fetch from individual channel volume
+            }
+            processUpstageSoundscape(ambientAudioChannel, **newAtSettings)
 
     return
 
-def processUpstageSoundscape(ch, name):
-    d = models.fetchModel(models.ModelType.ID_FILE_FOR_NAME, name)[0]
+def processUpstageSoundscape(ch, **kwargs):
+    try:
+        if(kwargs['terminate']):
+            logger("_INFO_", "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ kwargs['terminate'] exists")
+            if(kwargs.get("terminate") == True):
+                logger("_INFO_", "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ kwargs['terminate'] == TRUE")
+                terminateSoundscapeAudioThread(ch)
+        return
+    except KeyError:
+        logger("_INFO_", ch," won't be terminated")
     
-    #t = Thread(target=executeAudioFileOnSeparateThread, args=[d[dbc.KEY_ID], d[dbc.KEY_AUDIO_FILE]])
-    #t.name = "thread_id_"+str(d[dbc.KEY_ID])
-    #t.start()
     basePath = "/home/pratikpanchal/virtualSandbox/birdbox/application/static/sounds/"
 
-    if(ch == None or ch.isAlive() == False):
+    atSettings = {}
+    for key, value in kwargs.items():
+        if(key == 'name'):
+            if(value == 'None'):
+                terminateSoundscapeAudioThread(ch)
+                return
+            else:
+                d = models.fetchModel(models.ModelType.ID_FILE_FOR_NAME, value)[0]
+                atSettings['fp'] = basePath+d[dbc.KEY_AUDIO_FILE]
+        elif(key == 'endTime'):
+            atSettings['terminateAt'] = value
+        elif(key == 'vol'):
+            atSettings['vol'] = value
+        else:
+            print("Unsupported key/value pair: ", str(key), ":", str(value))
+
+    if(globals()[ch] == None or globals()[ch].isAlive() == False):
         #start new
-        ch = at(fp=basePath+d[dbc.KEY_AUDIO_FILE], terminateAt="11:45") 
-        ch.start() 
-    #else:
+        globals()[ch] = at(**atSettings) 
+        globals()[ch].start()
+    else:
         #update existing
+        for k, v in atSettings.items():
+            if(k=='fp'):
+                try:
+                    globals()[ch].changeFile(v)
+                except:
+                    logger("_ERROR_", "Fatal error: Could not change ", k, "on", ch)
+            elif(k=='vol'):
+                try:
+                    globals()[ch].changeVolume(v)
+                except:
+                    logger("_ERROR_", "Fatal error: Could not change ", k, "on", ch)
+            elif(k=='terminateAt'):
+                try:
+                    globals()[ch].setFutureTerminationTime(v)
+                except:
+                    logger("_ERROR_", "Fatal error: Could not change ", k, "on", ch)
+            else:
+                print("Unsupported AT key/value pair: ", str(k), ":", str(v))
 
-    while(ch.isAlive()):
-        time.sleep(1.5)
-        logger("_INFO_", "Thread", ch.name, "is running since", ch.runTime())
+    return
 
+def terminateSoundscapeAudioThread(audioThread):
+    if(globals()[audioThread] != None and globals()[audioThread].isAlive() == True):
+        globals()[audioThread].terminate()
+        globals()[audioThread] = None
     return
 
 ###################################################################################
