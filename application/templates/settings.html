@@ -2,11 +2,11 @@
 {% block content %}
 
 <div class="container">
-    <form id="idForm" , method="post">
+    <form id="idForm", method="post">
 
         <center>
             <h2>Settings</h2>
-            <h6>Last updated on {{last_updated}} (server time)</h6>
+            <h6 id="idHeaderLastUpdated">Last updated on {{last_updated}} (server time)</h6>
         </center>
 
         <div class="row">
@@ -49,7 +49,7 @@
                 <div class="col-right-narrow">
                     <label class="switch">
                         <input type="checkbox" id="idBirdsSwitch" name="continuousPlayback.birds"
-                            {% if ambienceEnabled %}checked{% endif %}>
+                            {% if birdsEnabled %}checked{% endif %}>
                         <span class="slider round"></span>
                     </label>
                 </div>
@@ -85,10 +85,10 @@
                 </div>
                 <div class="row">
                     <div style="width: 75%; float: left; display: inline-block; margin-top: 12px">
-                        <input id="idAmb1VolumeSlider" style="width: 100%" type="range" min="1" max="100" name="volume" value="{{amb1Volume}}">
+                        <input id="idAmb1VolumeSlider" style="width: 100%" type="range" min="1" max="100" name="continuousPlayback.amb1Vol" value="{{amb1Vol}}">
                     </div>
                     <div style="width: 25%; float: right; display: inline-block; height: 25px; ">
-                        <p style="float: right;" id="idAmb1VolVal">{{amb1Volume}}</p>
+                        <p style="float: right;" id="idAmb1VolVal">{{amb1Vol}}%</p>
                     </div>
                 </div>
                 <br>
@@ -109,10 +109,10 @@
                 </div>
                 <div class="row">
                     <div style="width: 75%; float: left; display: inline-block; margin-top: 12px">
-                        <input id="idAmb2VolumeSlider" style="width: 100%" type="range" min="1" max="100" name="volume" value="{{amb2Volume}}">
+                        <input id="idAmb2VolumeSlider" style="width: 100%" type="range" min="1" max="100" name="continuousPlayback.amb2Vol" value="{{amb2Vol}}">
                     </div>
                     <div style="width: 25%; float: right; display: inline-block; height: 25px; ">
-                        <p style="float: right;" id="idAmb2VolVal">{{amb2Volume}}</p>
+                        <p style="float: right;" id="idAmb2VolVal">{{amb2Vol}}%</p>
                     </div>
                 </div>
             </div>
@@ -246,19 +246,9 @@
 
         <br>
         <div class="row">
-            <input type="submit" value="Save">
+            <!--input type="submit" value="Save"-->
+            <!--button class="button" id="idFactoryResetButton" style="width: 75%;">Reset settings to defaults</button-->
         </div>
-
-
-
-        <!--div class="row">
-                <label class="subLabelTableCell">Volume</label>
-                </p>
-                <div class="row">
-                    <input style="width: 90%;" type="range" min="1" max="100" value="50">
-                </div>
-            </div>
-            <br><br-->
 
     </form>
 </div>

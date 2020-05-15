@@ -16,6 +16,7 @@ class ModelType(Enum):
     APP_SETTINGS = 7
     APP_SETTINGS_FOR_ID = 8
     ID_FILE_FOR_NAME = 9
+    PUSH_APP_SETTINGS = 10
 
 TABLE_NAME = "birdboxTable"
 
@@ -97,6 +98,15 @@ def fetchModel(modelType, *argv):
     
     elif(modelType == ModelType.UNSET_ACTIVE_FOR_DEAD_ENTRIES):
         query = "UPDATE "+TABLE_NAME+" SET "+dbc.KEY_ACTIVE+" = false WHERE "+dbc.KEY_ACTIVE+" = true AND UNIX_TIMESTAMP()-UNIX_TIMESTAMP("+dbc.KEY_LAST_UPDATED+")>duration+"+str(argv[0])+";"
+        return performDbOperation(dbConnection, TABLE_NAME, query)
+
+    elif(modelType == ModelType.PUSH_APP_SETTINGS):
+        try:
+            s = argv[0]
+        except:
+            print("ERROR: Expected string of settings")
+            return
+        query = "INSERT INTO "+dbc.TABLE_SETTINGS+" ("+dbc.KEY_SETTINGS+") VALUES ('" + s + "');"
         return performDbOperation(dbConnection, TABLE_NAME, query)
 
     elif(modelType == ModelType.APP_SETTINGS):

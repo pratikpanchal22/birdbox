@@ -22,11 +22,48 @@ function setVisibility(targetDivId, visibility){
     }
 }
 
+busyIconTimerHandle = null;
+function changeLeftIcon(val) {
+    var c = "fa fa-home";
+    if(val == 'busy'){
+        //busyIconTimerHandle = -1;
+        c = "fas fa-cloud-download-alt";
+        if($('#header-left').hasClass("fa-cloud-download-alt")){
+            c = "fas fa-cloud-upload-alt";
+        }
+
+        if(busyIconTimerHandle){
+            clearTimeout(busyIconTimerHandle);
+            busyIconTimerHandle = null;
+        }
+        
+        busyIconTimerHandle = setTimeout(function(){
+            changeLeftIcon('busy');
+        }, 250);
+        
+        //console.log("timerID after setting = " + busyIconTimerHandle);
+    }
+    else if (val == 'home'){
+        //cancel timer
+        if(busyIconTimerHandle != null){
+            clearTimeout(busyIconTimerHandle);
+            busyIconTimerHandle = null;
+        }
+        c = "fa fa-home";
+        //console.log("timerID after clearing = " + busyIconTimerHandle);
+    }
+    else {
+
+    }
+
+    $('#header-left').removeClass();
+    $('#header-left').addClass(c);
+}
+
 function initializations() {
 
     //Set left-top icon
-    $('#header-left').removeClass();
-    $('#header-left').addClass("fa fa-home");
+    changeLeftIcon('home');
 
     //Set initial visibility
     setVisibility(idDivSubContentCb, document.getElementById("idCbSwitch").checked);
@@ -75,14 +112,9 @@ function initializations() {
         setVisibility(idDivSubContentSilentPeriod, document.getElementById("idSilentPeriodSwitch").checked);
     });
 
-    /*$("#idVolumeSlider").on('change',function () {
-        $("#idVolVal").text($("#idVolumeSlider").val() + "%");
-    });*/
-
     var amb1Slide = document.getElementById('idAmb1VolumeSlider');
     amb1Slide.oninput = function () {
         document.getElementById('idAmb1VolVal').innerHTML = this.value + "%";
-        flagToPushSettings();
     }
 
     var amb2Slide = document.getElementById('idAmb2VolumeSlider');
@@ -96,38 +128,61 @@ function initializations() {
     }
    
     //Set form submit action listener
-    document.getElementById("idForm").action = "saveSettings.json?t="+Math.floor(Date.now()/1000);
+    //document.getElementById("idForm").action = "saveSettings.json?t="+Math.floor(Date.now()/1000);
+    //document.getElementById("idForm").addEventListener('change', function(e){
+    document.getElementById("idForm").onchange = function(e){
+        changeLeftIcon('busy');
+    
+        glPushSettingsOnNextIteration = true;
+        if(glReadyForNextPush){
+            pushSettings();
+        }
+    };
+
+    //factory reset
+    /*
+    document.getElementById("idFactoryResetButton").onclick = function(){
+        //window.location.href='/';
+        console.log("TODO: implement factory reset");
+    }*/
 
     return;
-}
-
-function flagToPushSettings(){
-    console.log("flag to push settings");
-    glPushSettingsOnNextIteration = true;
-
-    if(glReadyForNextPush){
-        pushSettings();
-    }
 }
 
 function pushSettings(){
     console.log("Push settings");
     if(glPushSettingsOnNextIteration == false){
+        console.log("No new data. Exiting");
+        changeLeftIcon('home');
         return;
     }
 
     glPushSettingsOnNextIteration = false;
     glReadyForNextPush = false;
 
-    $.post("saveSettingsLive.json?t="+ Math.floor(Date.now() / 1000), 
-                $('#idForm').serialize(), function(data, textStatus){
-                    console.log("Response status: " + textStatus);
-                    console.log("Received response: " + data);
-                    setTimeout(function(){
-                        glReadyForNextPush = true;
-                        pushSettings();
-                    }, 1000);
-                });
+    $.post("saveSettings.json?t="+ Math.floor(Date.now() / 1000), 
+            $('#idForm').serialize(), function(data, textStatus){
+                console.log("Response status: " + textStatus);
+                console.log("Received response: " + JSON.stringify(data));
+
+                if(textStatus == 'success'){
+                    doThingsOnSuccessfulResponse(data);
+                }
+                else {
+                    //do things on unsuccessful response
+                }
+            });
+}
+
+function doThingsOnSuccessfulResponse(data){
+    // Update timestamp
+    $('#idHeaderLastUpdated').text("Updated on " + data.last_updated).fadeOut(100).fadeIn(200);
+
+    // Set next callback
+    setTimeout(function(){
+        glReadyForNextPush = true;
+        pushSettings();
+    }, 250);
 }
 
 function setCompositeVisibilityAndStates1(){

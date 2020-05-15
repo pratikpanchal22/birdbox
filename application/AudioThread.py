@@ -133,6 +133,7 @@ class AudioThread(threading.Thread):
     def terminate(self):
         logger("_INFO_", "\na.terminate")
         self._rerun = False
+        self._repeat = False
         if(self._pCurrent != None):
             self._pCurrent.kill()
             self._pCurrent = None

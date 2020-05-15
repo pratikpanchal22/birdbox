@@ -338,35 +338,40 @@ def settingsChangeHandler():
         ambientAudioChannel = ""
         if(ambience == 'ambience1'): 
             ambientAudioChannel = 'ambientAudioChannel1'
+            ambientVolume = 'amb1Vol'
         elif(ambience == 'ambience2'):
             ambientAudioChannel = 'ambientAudioChannel2'
+            ambientVolume = 'amb2Vol'
         else:
             continue
 
         #Case 1: Continuous playback/upstage was turned OFF
         if((sNew['continuousPlayback']['enabled'] == False or sNew['continuousPlayback']['upStageEnabled'] == False) and
             (sOld['continuousPlayback']['enabled'] == True and sOld['continuousPlayback']['upStageEnabled'] == True)):
-            processUpstageSoundscape(ambientAudioChannel, terminate=True)
+            #processUpstageSoundscape(ambientAudioChannel, terminate=True)
+            t = Thread(target=processUpstageSoundscape, args=(ambientAudioChannel,), kwargs={'terminate':True})
+            t.start()
             continue
 
         #Case 2: Continuous playback/upstage was turned ON or MODIFIED or UNMODIFIED
         if(sNew['continuousPlayback']['enabled'] == True and sNew['continuousPlayback']['upStageEnabled'] == True):
             #Collect new settings into a dictionary:
+            
             newAtSettings = {
                 'name': sNew['continuousPlayback'][ambience],
                 'endTime': sNew['continuousPlayback']['endTime'],
-                'vol' : 100, #TODO: fetch from individual channel volume
+                'vol' : sNew['continuousPlayback'][ambientVolume]
             }
-            processUpstageSoundscape(ambientAudioChannel, **newAtSettings)
+            #processUpstageSoundscape(ambientAudioChannel, **newAtSettings)
+            t = Thread(target=processUpstageSoundscape, args=(ambientAudioChannel,), kwargs={**newAtSettings})
+            t.start()
 
     return
 
 def processUpstageSoundscape(ch, **kwargs):
     try:
         if(kwargs['terminate']):
-            logger("_INFO_", "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ kwargs['terminate'] exists")
             if(kwargs.get("terminate") == True):
-                logger("_INFO_", "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ kwargs['terminate'] == TRUE")
                 terminateSoundscapeAudioThread(ch)
         return
     except KeyError:
@@ -394,6 +399,16 @@ def processUpstageSoundscape(ch, **kwargs):
         #start new
         globals()[ch] = at(**atSettings) 
         globals()[ch].start()
+
+        #Update database if required
+        logger("_INFO_", "audiothread started and waiting for completion")
+
+        #Wait for completion
+        globals()[ch].join()
+
+        #Update database: appSettings
+        logger("_INFO_", "Update appSettings here to reflect thread termination")
+        disableAmbientChannelAndUpdateSettings(ch)
     else:
         #update existing
         for k, v in atSettings.items():
@@ -421,6 +436,31 @@ def terminateSoundscapeAudioThread(audioThread):
     if(globals()[audioThread] != None and globals()[audioThread].isAlive() == True):
         globals()[audioThread].terminate()
         globals()[audioThread] = None
+    return
+
+def atTerminationCb(text):
+    logger("_INFO_", text)
+    return
+
+def disableAmbientChannelAndUpdateSettings(ch):
+    
+    if(ch == 'ambientAudioChannel1'):
+        ambience = 'ambience1'
+    elif(ch == 'ambientAudioChannel2'):
+        ambience = 'ambience2'
+    else:
+        return
+
+    #Fetch current settings
+    a = json.loads(models.fetchModel(models.ModelType.APP_SETTINGS)[0][dbc.KEY_SETTINGS])
+
+    #Update soundscape to 'None'
+    a['continuousPlayback'][ambience] = 'None'
+
+    #Push updated settings back to database
+    jsonStr = json.dumps(a)
+    m = models.fetchModel(models.ModelType.PUSH_APP_SETTINGS, jsonStr)
+    logger("_INFO_", "Settings updated in database. Rows added= ", m)
     return
 
 ###################################################################################

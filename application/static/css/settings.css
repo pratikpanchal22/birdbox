@@ -128,6 +128,15 @@ label {
     }
 }
 
+/*****************/
+.fa-cloud-download-alt, .fa-cloud-upload-alt{
+    color: rgb(255, 166, 0);
+}
+
+.fa-home {
+    color: wheat;
+}
+
 /*#####################################*/
 
 /*  SWITCH / TOGGLE */

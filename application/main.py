@@ -12,6 +12,7 @@ import utilities as u
 import ast
 from enum import Enum
 from interface import logger
+from dateutil.tz import tzlocal
 
 app = Flask(__name__)
 
@@ -143,6 +144,7 @@ def infoPage():
 
     jsInclude = '<script src="/static/js/scripts.js?t='+ts+'"></script>'
     jsInclude += '<script src="/static/js/infoPageScripts.js?t='+ts+'"></script>'
+    jsInclude += '<script src="https://kit.fontawesome.com/7daabcbab0.js" crossorigin="anonymous"></script>'
     cssInclude = '<link rel="stylesheet" href="static/css/styles.css?t='+ts+'">'
 
     templateData = {
@@ -155,30 +157,15 @@ def infoPage():
     #Pass to template Data
     return render_template('infoPage.html', **templateData)
 
-@app.route("/saveSettingsLive.json", methods=['post', 'get'])
-def saveSettingsLive():
-    ts = str(int(time.time()))
-    response = {
-        "state":"successful",
-        "ts": ts
-    }
-
-    if(request.method == 'POST'):
-        print("\n\n *********** SAVESETTINGSLIVE data ******************")
-        print("request.data: ", request.data)
-        print("request.form: ", request.form)
-        
-        if(request.form.get('cbSwitch')): print('cbSwitch checked')
-        if(request.form.get('upstageSwitch')): print('upstageSwitch checked')
-        if(request.form.get('mtEnabled')): print('mtEnabled checked')
-        if(request.form.get('symphonySwitch')): print('symphonySwitch checked')
-        if(request.form.get('symLimitToSame')): print('symLimitToSame checked')
-        if(request.form.get('silentPeriod')): print('silentPeriod checked')
-
-    return jsonify(response)
-
 @app.route("/saveSettings.json", methods=['post', 'get'])
 def saveSettings():
+
+    ts = str(int(time.time()))
+    response = {
+        "state":"unsuccessful",
+        "ts": ts,
+        "last_updated": ""
+    }
 
     #Get current copy of settings
     a = Models(mysql).fetch(ModelType.APP_SETTINGS)
@@ -201,25 +188,44 @@ def saveSettings():
 
             #Values
             if(field == "landscape"): d['landscape'] = request.form.get(field)
-            if(field == "continuousPlayback.endTime"): d['continuousPlayback']['endTime'] = request.form.get(field)
-            if(field == "continuousPlayback.ambience1"): d['continuousPlayback']['ambience1'] = request.form.get(field)
-            if(field == "continuousPlayback.ambience2"): d['continuousPlayback']['ambience2'] = request.form.get(field)
-            if(field == "motionTriggers.frequency"): d['motionTriggers']['frequency'] = request.form.get(field)
             
-            if(field == "symphony.maximum"): d['symphony']['maximum'] = request.form.get(field)
-            if(field == "silentPeriod.startTime"): d['silentPeriod']['startTime'] = request.form.get(field)
-            if(field == "silentPeriod.endTime"): d['silentPeriod']['endTime'] = request.form.get(field)
-            if(field == "volume"): d['volume'] = request.form.get(field)
+            elif(field == "continuousPlayback.ambience1"): d['continuousPlayback']['ambience1'] = request.form.get(field)
+            elif(field == "continuousPlayback.amb1Vol"): d['continuousPlayback']['amb1Vol'] = request.form.get(field)
+            elif(field == "continuousPlayback.ambience2"): d['continuousPlayback']['ambience2'] = request.form.get(field)
+            elif(field == "continuousPlayback.amb2Vol"): d['continuousPlayback']['amb2Vol'] = request.form.get(field)
+            elif(field == "continuousPlayback.endTime"): d['continuousPlayback']['endTime'] = request.form.get(field)
+
+            elif(field == "motionTriggers.frequency"): d['motionTriggers']['frequency'] = request.form.get(field)
+            
+            elif(field == "symphony.maximum"): d['symphony']['maximum'] = request.form.get(field)
+
+            elif(field == "silentPeriod.startTime"): d['silentPeriod']['startTime'] = request.form.get(field)
+            elif(field == "silentPeriod.endTime"): d['silentPeriod']['endTime'] = request.form.get(field)
+            
+            elif(field == "volume"): d['volume'] = request.form.get(field)
+            
+            elif(field == "continuousPlayback.enabled" or 
+                 field == "continuousPlayback.birds" or
+                 field == "continuousPlayback.upStageEnabled" or
+                 field == "motionTriggers.enabled" or
+                 field == "symphony.enabled" or
+                 field == "symphony.limitToSameType" or
+                 field == "silentPeriod.enabled"): logger("_INFO_", "Checkbox", field, "handled outside loop")
+
+            else: logger("_INFO_", "ERROR! Form field/value: ", field,"/",request.form.get(field)," NOT BEING HANDLED")
         
         #Checkboxes
         d['continuousPlayback']['enabled'] = True if(request.form.get("continuousPlayback.enabled")) else False
+        d['continuousPlayback']['birdsEnabled'] = True if(request.form.get("continuousPlayback.birds")) else False
         d['continuousPlayback']['upStageEnabled'] = True if(request.form.get("continuousPlayback.upStageEnabled")) else False
+
         d['motionTriggers']['enabled'] = True if(request.form.get("motionTriggers.enabled")) else False
+
         d['symphony']['enabled'] = True if(request.form.get("symphony.enabled")) else False
         d['symphony']['limitToSameType'] = True if(request.form.get("symphony.limitToSameType")) else False
+
         d['silentPeriod']['enabled'] = True if(request.form.get("silentPeriod.enabled")) else False
 
-        #Values
 
         #Convert to json
         jsonStr = json.dumps(d)
@@ -231,12 +237,20 @@ def saveSettings():
         print("Settings saved. m=",m)
         print("************* END *************")
 
+        #Refetch from database
+        a = Models(mysql).fetch(ModelType.APP_SETTINGS)
+
         #Invoke settingsChange handler
         ambientSoundscapeThread = Thread(target=interface.settingsChangeHandler(), args=[1, 4])
         ambientSoundscapeThread.name = "ambientSoundScapeThread"
         ambientSoundscapeThread.start()
 
-    return(settings())
+        #Set state of response
+        response['state'] = 'successful'
+
+    print("Last updated: ", a[0]['last_updated'], " time-zone:", datetime.datetime.now(tzlocal()).tzname())
+    response['last_updated'] = str(a[0]['last_updated']) + " " + datetime.datetime.now(tzlocal()).tzname()
+    return(jsonify(response))
 
 @app.route("/settings.html", methods=['post', 'get'])
 def settings():
@@ -244,6 +258,7 @@ def settings():
 
     jsInclude = '<script src="/static/js/scripts.js?t='+ts+'"></script>'
     jsInclude += '<script src="/static/js/settings.js?t='+ts+'"></script>'
+    jsInclude += '<script src="https://kit.fontawesome.com/7daabcbab0.js" crossorigin="anonymous"></script>'
     cssInclude = '<link rel="stylesheet" href="static/css/styles.css?t='+ts+'">'
     cssInclude += '<link rel="stylesheet" href="static/css/settings.css?t='+ts+'">'
 
@@ -292,19 +307,25 @@ def settings():
 
     #Prepopulate endTime if continuousPlayback is disabled
     if(d['continuousPlayback']['enabled'] == False):
-        defaultEndTime = datetime.datetime.now() + datetime.timedelta(minutes = 60) 
+        defaultEndTime = datetime.datetime.now() + datetime.timedelta(minutes = 30) 
         d['continuousPlayback']['endTime'] = defaultEndTime.strftime("%H:%M")
 
     settingsTemplateData = {
         'last_updated' : settings['last_updated'],
+        
         'landscape' : d['landscape'],
         'landscapeLocations' : landscapeLocations,
+
         'cbEnabled' : d['continuousPlayback']['enabled'],
-        'cbEndTime' : d['continuousPlayback']['endTime'],
+        'birdsEnabled' : d['continuousPlayback']['birdsEnabled'],
         'ambienceEnabled' : d['continuousPlayback']['upStageEnabled'],
         'ambience1' : d['continuousPlayback']['ambience1'],
+        'amb1Vol' : d['continuousPlayback']['amb1Vol'],
         'ambience2' : d['continuousPlayback']['ambience2'],
+        'amb2Vol' : d['continuousPlayback']['amb2Vol'],
+        'cbEndTime' : d['continuousPlayback']['endTime'],
         'ambientLocations' : soundscapes,
+        
         'mtEnabled' : d['motionTriggers']['enabled'],
         'mtPeriod' : d['motionTriggers']['frequency'],
         'symphony' : d['symphony']['enabled'],
