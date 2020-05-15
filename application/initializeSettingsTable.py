@@ -1,6 +1,7 @@
 #from importCsv import tableExists, createDatabase
 import MySQLdb
 import dbConfig
+import json
 
 TABLE_NAME = 'appSettings'
 
@@ -32,6 +33,15 @@ for attempt in range(2):
 
 #TABLE EXISTS
 
+#GET DATA
+with open('factoryDefaultSettings.json') as f:
+    data = json.load(f)
+
+strJson = json.dumps(data)
+
+#print("\nType of strJson: ", type(strJson))
+print("factoryDefaultSettings.json: ", strJson)
+
 query_useDb    = "USE birdbox;"
 query_createTable1 = ("CREATE TABLE "+TABLE_NAME+" ( " +
                     "id INT NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY, "+
@@ -40,7 +50,7 @@ query_createTable1 = ("CREATE TABLE "+TABLE_NAME+" ( " +
 
 query_populateTable1 = ('INSERT INTO appSettings (settings) ' +
                       'VALUES ('+
-                      '\'{"landscape":"Rocky Mountain National Park","continuousPlayback":{"enabled":false,"endTime":"","upStageEnabled":false,"ambience1":"None","ambience2":"None"},"motionTriggers":{"enabled":true,"frequency":1},"symphony":{"enabled":true,"maximum":4,"limitToSameType":false},"silentPeriod":{"enabled":"enabled","startTime":"19:00","endTime":"06:00"},"volume":20}\''
+                      '\''+strJson+'\''
                       ');')
 
 cursor = db.cursor()

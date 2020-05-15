@@ -1,0 +1,28 @@
+{
+   "landscape":"Rocky Mountain National Park",
+   "continuousPlayback":{
+      "enabled":false,
+      "birdsEnabled":true,
+      "upStageEnabled":false,
+      "ambience1":"None",
+      "amb1Vol":100,
+      "ambience2":"None",
+      "amb2Vol":100,
+      "endTime":""
+   },
+   "motionTriggers":{
+      "enabled":true,
+      "frequency":1
+   },
+   "symphony":{
+      "enabled":true,
+      "maximum":4,
+      "limitToSameType":false
+   },
+   "silentPeriod":{
+      "enabled":"enabled",
+      "startTime":"19:00",
+      "endTime":"06:00"
+   },
+   "volume":20
+}
