@@ -17,6 +17,7 @@ class ModelType(Enum):
     APP_SETTINGS_FOR_ID = 8
     ID_FILE_FOR_NAME = 9
     PUSH_APP_SETTINGS = 10
+    UPDATE_APP_SETTINGS_IN_PLACE = 11
 
 TABLE_NAME = "birdboxTable"
 
@@ -107,6 +108,17 @@ def fetchModel(modelType, *argv):
             print("ERROR: Expected string of settings")
             return
         query = "INSERT INTO "+dbc.TABLE_SETTINGS+" ("+dbc.KEY_SETTINGS+") VALUES ('" + s + "');"
+        return performDbOperation(dbConnection, TABLE_NAME, query)
+
+    elif(modelType == ModelType.UPDATE_APP_SETTINGS_IN_PLACE):
+        try: 
+            s=argv[0]
+        except:
+            print("ERROR: Expected queryFragment for update app settings in place")
+            return
+        query = ("UPDATE "+dbc.TABLE_SETTINGS
+                    +" SET settings = JSON_SET(settings, "+s+")"
+                    +" WHERE id = (SELECT max(id) FROM "+dbc.TABLE_SETTINGS+");")
         return performDbOperation(dbConnection, TABLE_NAME, query)
 
     elif(modelType == ModelType.APP_SETTINGS):

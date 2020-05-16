@@ -445,22 +445,16 @@ def atTerminationCb(text):
 def disableAmbientChannelAndUpdateSettings(ch):
     
     if(ch == 'ambientAudioChannel1'):
-        ambience = 'ambience1'
+        queryFrag = "'$.continuousPlayback.ambience1', 'None'"
     elif(ch == 'ambientAudioChannel2'):
-        ambience = 'ambience2'
+        queryFrag = "'$.continuousPlayback.ambience2', 'None'"
     else:
+        logger("_INFO_", "Unsupported channel: ", ch)
         return
 
-    #Fetch current settings
-    a = json.loads(models.fetchModel(models.ModelType.APP_SETTINGS)[0][dbc.KEY_SETTINGS])
-
-    #Update soundscape to 'None'
-    a['continuousPlayback'][ambience] = 'None'
-
-    #Push updated settings back to database
-    jsonStr = json.dumps(a)
-    m = models.fetchModel(models.ModelType.PUSH_APP_SETTINGS, jsonStr)
-    logger("_INFO_", "Settings updated in database. Rows added= ", m)
+    #Update app settings in-place
+    a = models.fetchModel(models.ModelType.UPDATE_APP_SETTINGS_IN_PLACE, str(queryFrag))
+    logger("_INFO_", "Settings updated inplace in database. Return: ", str(a))
     return
 
 ###################################################################################
