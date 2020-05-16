@@ -45,7 +45,7 @@ print("factoryDefaultSettings.json: ", strJson)
 query_useDb    = "USE birdbox;"
 query_createTable1 = ("CREATE TABLE "+TABLE_NAME+" ( " +
                     "id INT NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY, "+
-                    "last_updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, "+
+                    "last_updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, "+
                     "settings JSON);")
 
 query_populateTable1 = ('INSERT INTO appSettings (settings) ' +
