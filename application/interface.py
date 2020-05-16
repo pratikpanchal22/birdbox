@@ -10,7 +10,9 @@ import dbConfig as dbc
 from dateutil import parser
 import datetime
 import time
-from AudioThread import AudioThread as at
+from AudioInterface import AudioThread as at
+from AudioInterface import AlsaVolume as av
+#import AudioInterface.AudioThread as at
 
 #TRIGGER TYPES
 class TriggerType(Enum):
@@ -330,11 +332,11 @@ def settingsChangeHandler():
 
     sNew = json.loads(m1[0][dbc.KEY_SETTINGS])
     sOld = json.loads(m2[0][dbc.KEY_SETTINGS])
-    logger("_INFO_", "Current Settings: ", sNew)
-    logger("_INFO_", "Previous Settings: ", sOld)
+    logger("_INFO_", "\n    ### Current Settings: ", sNew)
+    logger("_INFO_", "\n    ### Previous Settings: ", sOld)
 
+    #Ambient Sounscape handler
     for ambience in ['ambience1', 'ambience2']:
-
         ambientAudioChannel = ""
         if(ambience == 'ambience1'): 
             ambientAudioChannel = 'ambientAudioChannel1'
@@ -366,6 +368,10 @@ def settingsChangeHandler():
             t = Thread(target=processUpstageSoundscape, args=(ambientAudioChannel,), kwargs={**newAtSettings})
             t.start()
 
+    #Master Volume Handler
+    if(sNew['volume'] != sOld['volume']):
+        av.setVolume(int(sNew['volume']))
+    
     return
 
 def processUpstageSoundscape(ch, **kwargs):

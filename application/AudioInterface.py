@@ -5,6 +5,76 @@ from dateutil import parser
 from datetime import timedelta, datetime
 from interface import logger
 
+import subprocess
+import re
+import threading  
+
+class AlsaVolume:
+    targetVolume = 75
+    #currentVolume = 0
+    step = 1
+    interval = 0.0001
+
+    #def __init__(self):
+    #    return
+
+    @classmethod
+    def getCurrentVolume(cls, *argv):
+        cmd = ['amixer']
+
+        try:
+            vs = argv[0]
+            cmd.extend(['set', 'PCM', vs])
+        except:
+            cmd.extend(['get', 'PCM'])
+        
+        print(cmd)
+        
+        #parse current volume here and return from here
+        r = subprocess.check_output(cmd)
+        string = r.decode("utf-8")
+        #print("output: ", string)
+        sg = re.search(' \[(.*)\%\] ', string)
+        volume = sg.group(1)
+        #print("Extracted volume: ", volume)
+        return int(volume)
+    
+    @classmethod
+    def setVolume(cls, vol):
+        if(vol < 0):
+            vol = 0
+        elif(vol > 100):
+            vol = 100
+
+        AlsaVolume.targetVolume = vol
+        cv = cls.getCurrentVolume() 
+        if(cv != cls.targetVolume):
+            cls.__driftToTarget(cv)
+        return
+
+    @classmethod
+    def __driftToTarget(cls, cv):
+        
+        #print("Drifting: cv=", cv, "  target=", cls.targetVolume)
+        if(cls.targetVolume == cv):
+            return
+        elif(cls.targetVolume > cv):
+            cv += cls.step
+        else:
+            cv -= cls.step
+
+        cv = cls.getCurrentVolume(str(cv)+'%')
+
+        t = threading.Timer(cls.interval, cls.__driftToTarget, args = [cv])
+        t.start()
+        return
+
+#if __name__ == '__main__':
+#    print("\nEntering Alsa volume main")
+#    print(AlsaVolume.getCurrentVolume())
+#    AlsaVolume.setVolume(100)
+    
+
 class AudioThread(threading.Thread):
     instanceCount = 0
     def __init__(self, **kwargs):

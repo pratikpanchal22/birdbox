@@ -13,6 +13,7 @@ import ast
 from enum import Enum
 from interface import logger
 from dateutil.tz import tzlocal
+from AudioInterface import AlsaVolume as av
 
 app = Flask(__name__)
 
@@ -334,7 +335,8 @@ def settings():
         'silentPeriod' : d['silentPeriod']['enabled'],
         'spStartTime' : d['silentPeriod']['startTime'],
         'spEndTime' : d['silentPeriod']['endTime'],
-        'volume' : d['volume']
+        #'volume' : d['volume']
+        'volume' : av.getCurrentVolume()
     }
     
     templateData.update(settingsTemplateData)
