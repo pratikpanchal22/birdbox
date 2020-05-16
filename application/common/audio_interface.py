@@ -3,7 +3,7 @@ import time
 import subprocess 
 from dateutil import parser
 from datetime import timedelta, datetime
-from interface import logger
+from utilities import logger
 
 import subprocess
 import re

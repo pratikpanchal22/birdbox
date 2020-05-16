@@ -10,8 +10,8 @@ import dbConfig as dbc
 from dateutil import parser
 import datetime
 import time
-from AudioInterface import AudioThread as at
-from AudioInterface import AlsaVolume as av
+from common.audio_interface import AudioThread as at
+from common.audio_interface import AlsaVolume as av
 #import AudioInterface.AudioThread as at
 
 #TRIGGER TYPES
