@@ -1,10 +1,9 @@
 import csv
 import MySQLdb
-import dbConfig
+from application.models import dbConfig
 
 #print(dbConfig.MYSQL_USER, dbConfig.MYSQL_PASSWORD, dbConfig.MYSQL_HOST, dbConfig.MYSQL_DB)
 TABLE_NAME = 'birdboxTable'
-
 
 def tableExists(db, tableName):
     cursor = db.cursor()
@@ -117,7 +116,7 @@ def populateDataWithTable(db, table_name, col_names, dataRows):
 
 
 def importCsv():
-    CSV_FILE = 'BirdBox - birdbox_table.csv'
+    CSV_FILE = 'application/setup/BirdBox - birdbox_table.csv'
 
     col_names = ''
     col_data_types = ''

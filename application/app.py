@@ -2,28 +2,29 @@ from flask import Flask, render_template, jsonify, request
 from flask_mysqldb import MySQL
 import os
 from threading import Thread
-import dbConfig as dbc
 import datetime
 import time
 import json
 from json import JSONEncoder
-import interface as interface
-import utilities as u
 import ast
 from enum import Enum
-from interface import logger
 from dateutil.tz import tzlocal
+#
+from common.utility import logger
 from common.audio_interface import AlsaVolume as av
+from models import dbConfig as dbc
+from interface import interface as interface
+from common.utility import DateTimeEncoder as dte
 
-app = Flask(__name__)
+apl = Flask(__name__)
 
-app.config['MYSQL_USER'] = dbc.MYSQL_USER
-app.config['MYSQL_PASSWORD'] = dbc.MYSQL_PASSWORD
-app.config['MYSQL_HOST'] = dbc.MYSQL_HOST
-app.config['MYSQL_DB'] = dbc.MYSQL_DB
-app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
+apl.config['MYSQL_USER'] = dbc.MYSQL_USER
+apl.config['MYSQL_PASSWORD'] = dbc.MYSQL_PASSWORD
+apl.config['MYSQL_HOST'] = dbc.MYSQL_HOST
+apl.config['MYSQL_DB'] = dbc.MYSQL_DB
+apl.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
-mysql = MySQL(app)
+mysql = MySQL(apl)
 
 #################### App Models #######################
 #MODEL TYPES
@@ -113,9 +114,9 @@ class Models:
         return results
 
 #################### App Routes ########################
-@app.route("/")
-@app.route("/index.htm")
-@app.route("/index.html")
+@apl.route("/")
+@apl.route("/index.htm")
+@apl.route("/index.html")
 def index():
     ts = str(int(time.time()))
 
@@ -130,7 +131,7 @@ def index():
     }
     return render_template('index.html', **templateData)
 
-@app.route("/infoPage.html")
+@apl.route("/infoPage.html")
 def infoPage():    
     #Grab the id from url parameters
     id = request.args.get("id")
@@ -158,7 +159,7 @@ def infoPage():
     #Pass to template Data
     return render_template('infoPage.html', **templateData)
 
-@app.route("/saveSettings.json", methods=['post', 'get'])
+@apl.route("/saveSettings.json", methods=['post', 'get'])
 def saveSettings():
 
     ts = str(int(time.time()))
@@ -253,7 +254,7 @@ def saveSettings():
     response['last_updated'] = str(a[0]['last_updated']) + " " + datetime.datetime.now(tzlocal()).tzname()
     return(jsonify(response))
 
-@app.route("/settings.html", methods=['post', 'get'])
+@apl.route("/settings.html", methods=['post', 'get'])
 def settings():
     ts = str(int(time.time()))
 
@@ -342,7 +343,7 @@ def settings():
     templateData.update(settingsTemplateData)
     return render_template('settings.html', **templateData)    
 
-@app.route("/onDemand.json", methods=['get'])
+@apl.route("/onDemand.json", methods=['get'])
 def onDemand():
     ts = str(int(time.time()))
 
@@ -368,7 +369,7 @@ def onDemand():
     response['state'] = "successful"
     return jsonify(response)
 
-@app.route("/onStage.json")
+@apl.route("/onStage.json")
 def onStage():
     ts = str(int(time.time()))
     
@@ -408,7 +409,7 @@ def onStage():
 
     return json.dumps(jsonObj)
 
-@app.route("/idData.json")
+@apl.route("/idData.json")
 def idData():
     ts = str(int(time.time()))
     
@@ -434,15 +435,15 @@ def idData():
 
     entries = Models(mysql).fetch(ModelType.METADATA_FOR_IDS, comma_separated_ids)
     print("\nConverting entries to JSON:")
-    print(json.dumps(entries, cls=u.DateTimeEncoder))
+    print(json.dumps(entries, cls=dte))
 
     if(len(entries)==0):
         jsonObj["state"] = "empty"
     else:
         jsonObj["state"] = "successful"
-        jsonObj["data"] = json.dumps(entries, cls=u.DateTimeEncoder)
+        jsonObj["data"] = json.dumps(entries, cls=dte)
 
     return json.dumps(jsonObj)
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=80, debug=True)
+    apl.run(host='0.0.0.0', port=80, debug=True)

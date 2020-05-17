@@ -2,8 +2,9 @@ import datetime, time
 import random
 import MySQLdb
 import MySQLdb.cursors
-import dbConfig as dbc
 from enum import Enum
+#
+from models import dbConfig as dbc
 
 #MODEL TYPES
 class ModelType(Enum):

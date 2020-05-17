@@ -3,11 +3,12 @@ import time
 import subprocess 
 from dateutil import parser
 from datetime import timedelta, datetime
-from utilities import logger
-
 import subprocess
 import re
 import threading  
+#
+#from application.common.utility import logger
+from common.utility import logger
 
 class AlsaVolume:
     targetVolume = 75

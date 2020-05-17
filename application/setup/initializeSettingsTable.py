@@ -1,8 +1,17 @@
-#from importCsv import tableExists, createDatabase
 import MySQLdb
-import dbConfig
 import json
+#from .. import dbConfig
+#import os, sys
+#sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+from application.models import dbConfig
 
+import pathlib
+scriptDir = pathlib.Path(__file__)#.parent#.absolute()
+print("script dir: ", scriptDir)
+print("cwd: ", pathlib.Path().absolute())
+print("__name__: ", __name__)
+
+#if '__name__' == '__main__':
 TABLE_NAME = 'appSettings'
 
 #CONNECT TO DATABASE
@@ -34,7 +43,8 @@ for attempt in range(2):
 #TABLE EXISTS
 
 #GET DATA
-with open('factoryDefaultSettings.json') as f:
+with open('application/setup/factoryDefaultSettings.json') as f:
+#with open(str(scriptDir)+'/factoryDefaultSettings.json') as f:
     data = json.load(f)
 
 strJson = json.dumps(data)
@@ -49,9 +59,9 @@ query_createTable1 = ("CREATE TABLE "+TABLE_NAME+" ( " +
                     "settings JSON);")
 
 query_populateTable1 = ('INSERT INTO appSettings (settings) ' +
-                      'VALUES ('+
-                      '\''+strJson+'\''
-                      ');')
+                    'VALUES ('+
+                    '\''+strJson+'\''
+                    ');')
 
 cursor = db.cursor()
 cursor.execute(query_useDb)

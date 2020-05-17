@@ -2,13 +2,13 @@ import RPi.GPIO as GPIO
 import datetime, time
 import threading
 from threading import Thread
-from application.utilities import logger
 
 import sys
 sys.path.append('application/')
 print(sys.path)
 
-import interface as interface
+from interface import interface as interface
+from common.utility import logger
 
 #pwm = None
 #pwmCurrentVal = 0
