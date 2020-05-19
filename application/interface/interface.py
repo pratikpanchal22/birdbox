@@ -200,7 +200,7 @@ def executeAudioFileOnSeparateThread(id, file):
     audioCmd = "mpg321 --gain "+str(maxVolume())+" --quiet"
     #logger("_INFO", "os command running from directory: ")
     #os.system("pwd")
-    basePath = "/home/pratikpanchal/virtualSandbox/birdbox/application/static/sounds/"
+    basePath = "/home/pratikpanchal/birdbox/application/static/sounds/"
     osCmd = audioCmd + " " + basePath + file
     #logger("_INFO_","os.command: ",osCmd)
     os.system(osCmd)
@@ -383,7 +383,7 @@ def processUpstageSoundscape(ch, **kwargs):
     except KeyError:
         logger("_INFO_", ch," won't be terminated")
     
-    basePath = "/home/pratikpanchal/virtualSandbox/birdbox/application/static/sounds/"
+    basePath = "/home/pratikpanchal/birdbox/application/static/sounds/"
 
     atSettings = {}
     for key, value in kwargs.items():
