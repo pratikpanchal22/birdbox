@@ -122,8 +122,10 @@ def main():
     GPIO.setmode(GPIO.BCM)
 
     #Setup GPIO as input
-    GPIO.setup(17, GPIO.IN)  #GEN2 - Input - motion sensor
-    GPIO.setup(27, GPIO.IN)  #GEN2 - button press / on demand
+    #Motion sensor input needs pull down since it is ACTIVE HIGH and detection is required on RISING edge
+    GPIO.setup(17, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)  #GEN2 - Input - motion sensor
+    #Button press input needs pull down since it is ACTIVE LOW and detection is required on RISING edge when button is released
+    GPIO.setup(27, GPIO.IN, pull_up_down=GPIO.PUD_UP)  #GEN2 - button press / on demand
 
     #PWM
     lRing = LightRing(18)
