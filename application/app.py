@@ -445,5 +445,12 @@ def idData():
 
     return json.dumps(jsonObj)
 
+@apl.route("/getCombinatoricData.json")
+def idData():
+    ts = str(int(time.time()))
+    
+    landscape = request.args.get("landscape")
+    channels = request.args.get("channels")
+
 if __name__ == "__main__":
     apl.run(host='0.0.0.0', port=80, debug=True)
