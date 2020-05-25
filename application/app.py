@@ -86,9 +86,9 @@ class Models:
                 print("Error: Expected location")
                 return
             self.query = ("SELECT COUNT(*) as total, "
-                            + "(SELECT COUNT(distinct name) FROM birdboxTable WHERE audio_type != 'soundscape') as distinctBirds, "
-                            + "(SELECT COUNT(distinct audio_file) FROM birdboxTable WHERE audio_type != 'soundscape') as totalBirdSounds, "
-                            + "(SELECT COUNT(distinct audio_file) FROM birdboxTable WHERE audio_type = 'soundscape') as landscapeSounds "
+                            + "(SELECT COUNT(distinct name) FROM birdboxTable WHERE audio_type != 'soundscape' and location = '"+str(loc)+"') as distinctBirds, "
+                            + "(SELECT COUNT(distinct audio_file) FROM birdboxTable WHERE audio_type != 'soundscape' and location = '"+str(loc)+"') as totalBirdSounds, "
+                            + "(SELECT COUNT(distinct audio_file) FROM birdboxTable WHERE audio_type = 'soundscape' and location = '"+str(loc)+"') as landscapeSounds "
                          +"FROM birdboxTable WHERE location = '"+str(loc)+"';")
         else:
             print("ERROR: Unsupported model type: ",str(self.modelType))
@@ -98,6 +98,7 @@ class Models:
             print("Error! Empty query / unsupported ModelType")
             return
         
+        #logger("_INFO_", "Query: ", self.query)
         cursor = self.sql.connection.cursor()
         cursor.execute(self.query)
         r = list(cursor.fetchall())
@@ -470,6 +471,7 @@ def combinatoricData():
     
     location = request.args.get("landscape")
     r = int(request.args.get("channels"))
+    logger("_INFO_", "location=", location)
 
     d = Models(mysql).fetch(ModelType.LOCATION_INFO, location)
 
@@ -477,16 +479,17 @@ def combinatoricData():
     logger("_INFO_", "d[totalBirdSounds]=", d[0]['totalBirdSounds'])
     #combinations = nCr
     n = d[0]['totalBirdSounds']
-    combInt = math.factorial(n)/(math.factorial(n-r) * math.factorial(r))
-    comb = '{:.0}'.format(math.factorial(n)/(math.factorial(n-r) * math.factorial(r)))
-    logger("_INFO_", "Combinations: ", comb, " Probability=", str(100/combInt))
+    if(n>0 and r>0):
+        combInt = math.factorial(n)/(math.factorial(n-r) * math.factorial(r))
+        comb = '{:.0}'.format(math.factorial(n)/(math.factorial(n-r) * math.factorial(r)))
+        logger("_INFO_", "Combinations: ", comb, " Probability=", str(100/combInt))
 
-    landscapeSubData = "This landscape has " + str(d[0]["distinctBirds"]) + " unique birds, " + str(d[0]["totalBirdSounds"]) + " songs, calls and other birdsounds, and " + str(d[0]["landscapeSounds"]) + " background soundscapes."
-    channelsSubData = "With this setting, the number of birdsounds combinations possible are " + str(combInt)[:-2] + ". Or in other words, the probability of listening to the same combination is " + f"{Decimal(100/combInt):.4E}" +"%"
-    
-    response["state"] = "successful"
-    response["landscapeSubData"] = landscapeSubData
-    response["channelsSubData"] = channelsSubData
+        landscapeSubData = "This landscape has " + str(d[0]["distinctBirds"]) + " unique birds, " + str(d[0]["totalBirdSounds"]) + " songs, calls and other birdsounds, and " + str(d[0]["landscapeSounds"]) + " ambient soundscapes."
+        channelsSubData = "With this setting, the number of birdsounds combinations possible are " + '{:,}'.format(combInt)[:-2] + ". Or in other words, the probability of listening to the same combination is " + f"{Decimal(100/combInt):.4E}" +"%"
+        
+        response["state"] = "successful"
+        response["landscapeSubData"] = landscapeSubData
+        response["channelsSubData"] = channelsSubData
 
     return json.dumps(response)
 

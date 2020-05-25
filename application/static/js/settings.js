@@ -77,7 +77,11 @@ function initializations() {
     $("#header-left").click(function(){
         //settingsClickHandler();
         window.location.href='index.html';
-     });
+    });
+ 
+    $("#idLandscape").change(function () {
+        getLandscapeInfo();
+    });
 
     $("#idCbSwitch").change(function () {
         setVisibility(idDivSubContentCb, document.getElementById("idCbSwitch").checked);
@@ -106,6 +110,10 @@ function initializations() {
 
     $("#idSymphonySwitch").change(function () {
         setVisibility(idDivSubContentSymphony, document.getElementById("idSymphonySwitch").checked);
+    });
+    
+    $("#idMaxNumberOfChannels").change(function () {
+        getLandscapeInfo();
     });
 
     $("#idSilentPeriodSwitch").change(function () {
@@ -146,6 +154,9 @@ function initializations() {
         console.log("TODO: implement factory reset");
     }*/
 
+    //Landscape info
+    getLandscapeInfo();
+
     return;
 }
 
@@ -172,6 +183,31 @@ function pushSettings(){
                     //do things on unsuccessful response
                 }
             });
+}
+
+function getLandscapeInfo(){
+
+    queryParms = {
+        t : Math.floor(Date.now() / 1000),
+        landscape : $('#idLandscape').find(":selected").text(),
+        channels : $('#idMaxNumberOfChannels').val()
+    }
+
+    $.getJSON("getCombinatoricData.json", queryParms, function (result) {
+        //process result ihere
+        console.log(result)
+        if (result["state"] == "successful") {
+            $('#idLandscapeInfo').text(result["landscapeSubData"]);
+            $('#idCombinationInfo').text(result["channelsSubData"]);
+        }
+        else {
+            errorMessage = "This landscape doesn not have sufficient data";
+            $('#idLandscapeInfo').text(errorMessage);
+            $('#idCombinationInfo').text(errorMessage);
+        }
+    }).done(function () {
+
+    });
 }
 
 function doThingsOnSuccessfulResponse(data){

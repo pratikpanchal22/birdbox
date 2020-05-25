@@ -2,7 +2,7 @@
 {% block content %}
 
 <div class="container">
-    <form id="idForm", method="post">
+    <form id="idForm" , method="post">
 
         <center>
             <h2>Settings</h2>
@@ -18,11 +18,13 @@
                     <!--option value="RMNP">Rocky Mountain National Park, Colorado</option>
                         <option value="YNP">Yellowstone National Park, Wyoming</option-->
                     {% for loc in landscapeLocations %}
-                    <option value="{{loc['location']}}" {% if loc['location'] == landscape %}SELECTED{% endif %}>
-                        {{loc['location']}}</option>
+                    <option value="{{loc['location']}}" {% if loc['location'] == landscape %}SELECTED{% endif %}>{{loc['location']}}</option>
                     {% endfor %}
                 </select>
-            </div>
+            </div>                        
+        </div>
+        <div class="row">
+            <h6 id="idLandscapeInfo" style="width: 95%; float: right;"></h6>
         </div>
         <br>
         <hr>
@@ -85,7 +87,8 @@
                 </div>
                 <div class="row">
                     <div style="width: 75%; float: left; display: inline-block; margin-top: 12px">
-                        <input id="idAmb1VolumeSlider" style="width: 100%" type="range" min="1" max="100" name="continuousPlayback.amb1Vol" value="{{amb1Vol}}">
+                        <input id="idAmb1VolumeSlider" style="width: 100%" type="range" min="1" max="100"
+                            name="continuousPlayback.amb1Vol" value="{{amb1Vol}}">
                     </div>
                     <div style="width: 25%; float: right; display: inline-block; height: 25px; ">
                         <p style="float: right;" id="idAmb1VolVal">{{amb1Vol}}%</p>
@@ -109,7 +112,8 @@
                 </div>
                 <div class="row">
                     <div style="width: 75%; float: left; display: inline-block; margin-top: 12px">
-                        <input id="idAmb2VolumeSlider" style="width: 100%" type="range" min="1" max="100" name="continuousPlayback.amb2Vol" value="{{amb2Vol}}">
+                        <input id="idAmb2VolumeSlider" style="width: 100%" type="range" min="1" max="100"
+                            name="continuousPlayback.amb2Vol" value="{{amb2Vol}}">
                     </div>
                     <div style="width: 25%; float: right; display: inline-block; height: 25px; ">
                         <p style="float: right;" id="idAmb2VolVal">{{amb2Vol}}%</p>
@@ -175,10 +179,13 @@
                     <label>• Maximum number of birds in symphony</label>
                 </div>
                 <div class="col-right-narrow">
-                    <input type="number" name="symphony.maximum" min="1" max="5" value={{symMaxBirds}}>
+                    <input id="idMaxNumberOfChannels" type="number" name="symphony.maximum" min="1" max="5" value={{symMaxBirds}}>
                 </div>
             </div>
             <div class="row">
+                <h6 id="idCombinationInfo" style="width: 95%; float: right;"></h6>
+            </div>
+            <div class="row" style="display: none;"> <!-- hidden for now-->
                 <div class="col-left-indented-2lines">
                     <label>• Limit to same bird type</label>
                 </div>
