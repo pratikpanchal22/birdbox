@@ -9,6 +9,8 @@ from json import JSONEncoder
 import ast
 from enum import Enum
 from dateutil.tz import tzlocal
+import math
+from decimal import Decimal
 #
 from common.utility import logger
 from common.audio_interface import AlsaVolume as av
@@ -37,6 +39,7 @@ class ModelType(Enum):
     APP_SETTINGS = 4
     LIST_OF_LOCATIONS = 5
     LIST_OF_SOUNDSCAPES_FOR_LOC = 6
+    LOCATION_INFO = 7
     #Push
 
 class Models:
@@ -76,6 +79,17 @@ class Models:
                 print("ERROR: Expected id")
                 return
             self.query = "SELECT "+dbc.KEY_ID+", "+dbc.KEY_NAME+", "+dbc.KEY_AUDIO_FILE+", "+dbc.KEY_AUDIO_TYPE+", "+dbc.KEY_DESCRIPTION+", "+dbc.KEY_DURATION+", "+dbc.KEY_CREDIT+", "+dbc.KEY_DATE_CREATED_OR_CAPTURED+", "+dbc.KEY_IMAGE_FILE+", "+dbc.KEY_IMAGE_DESC+", "+dbc.KEY_LOCATION+", "+dbc.KEY_URL+" "+" FROM birdboxTable where "+dbc.KEY_ID+" = " + str(id)+";"
+        elif(self.modelType == ModelType.LOCATION_INFO):
+            try:
+                loc = argv[0]
+            except:
+                print("Error: Expected location")
+                return
+            self.query = ("SELECT COUNT(*) as total, "
+                            + "(SELECT COUNT(distinct name) FROM birdboxTable WHERE audio_type != 'soundscape') as distinctBirds, "
+                            + "(SELECT COUNT(distinct audio_file) FROM birdboxTable WHERE audio_type != 'soundscape') as totalBirdSounds, "
+                            + "(SELECT COUNT(distinct audio_file) FROM birdboxTable WHERE audio_type = 'soundscape') as landscapeSounds "
+                         +"FROM birdboxTable WHERE location = '"+str(loc)+"';")
         else:
             print("ERROR: Unsupported model type: ",str(self.modelType))
             return
@@ -446,11 +460,35 @@ def idData():
     return json.dumps(jsonObj)
 
 @apl.route("/getCombinatoricData.json")
-def idData():
+def combinatoricData():
     ts = str(int(time.time()))
+
+    response = {
+        "state":"unsuccessful",
+        "ts": ts
+    }
     
-    landscape = request.args.get("landscape")
-    channels = request.args.get("channels")
+    location = request.args.get("landscape")
+    r = int(request.args.get("channels"))
+
+    d = Models(mysql).fetch(ModelType.LOCATION_INFO, location)
+
+    logger("_INFO_", "d=", d)
+    logger("_INFO_", "d[totalBirdSounds]=", d[0]['totalBirdSounds'])
+    #combinations = nCr
+    n = d[0]['totalBirdSounds']
+    combInt = math.factorial(n)/(math.factorial(n-r) * math.factorial(r))
+    comb = '{:.0}'.format(math.factorial(n)/(math.factorial(n-r) * math.factorial(r)))
+    logger("_INFO_", "Combinations: ", comb, " Probability=", str(100/combInt))
+
+    landscapeSubData = "This landscape has " + str(d[0]["distinctBirds"]) + " unique birds, " + str(d[0]["totalBirdSounds"]) + " songs, calls and other birdsounds, and " + str(d[0]["landscapeSounds"]) + " background soundscapes."
+    channelsSubData = "With this setting, the number of birdsounds combinations possible are " + str(combInt)[:-2] + ". Or in other words, the probability of listening to the same combination is " + f"{Decimal(100/combInt):.4E}" +"%"
+    
+    response["state"] = "successful"
+    response["landscapeSubData"] = landscapeSubData
+    response["channelsSubData"] = channelsSubData
+
+    return json.dumps(response)
 
 if __name__ == "__main__":
     apl.run(host='0.0.0.0', port=80, debug=True)
