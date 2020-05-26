@@ -13,6 +13,8 @@ from common.audio_interface import AlsaVolume as av
 from models import dbConfig as dbc
 from common.utility import logger
 from models import models as models
+from models.data import Models
+from models.data import ModelType
 
 #TRIGGER TYPES
 class TriggerType(Enum):
@@ -36,9 +38,13 @@ ambientAudioChannel2 = None
 def updateGlobalSettings():
     global appSettings
     try:
-        appSettings = json.loads(models.fetchModel(models.ModelType.APP_SETTINGS)[0][dbc.KEY_SETTINGS])
-    except:
-        logger("_ERROR_", "appSettings[0][dbc.KEY_SETTINGS] doesn't exist")
+        #appSettings = json.loads(models.fetchModel(models.ModelType.APP_SETTINGS)[0][dbc.KEY_SETTINGS])
+
+        dbConn = models.connectToDatabase()
+        appSettings = json.loads(Models(dbConn).fetch(ModelType.APP_SETTINGS)[0][dbc.KEY_SETTINGS])
+    except Exception as e:
+        logger("_ERROR_", "Error: Unable to fetch data from database")
+        logger("_EXCEPTION_", str(e))
     return
 
 def isSilentPeriodActive():
