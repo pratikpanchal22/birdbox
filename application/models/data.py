@@ -1,6 +1,7 @@
 from enum import Enum
 #
 from models import dbConfig as dbc
+from common.utility import logger
 
 #################### App Models #######################
 #MODEL TYPES
@@ -17,8 +18,8 @@ class ModelType(Enum):
     #Push
 
 class Models:
-    def __init__(self, sql):
-        self.sql = sql
+    def __init__(self, dbConn):
+        self.dbConnection = dbConn
         self.modelType = ModelType.UNINITIALIZED_MODEL_TYPE
         self.query = ""
         
@@ -73,11 +74,11 @@ class Models:
             return
         
         #logger("_INFO_", "Query: ", self.query)
-        cursor = self.sql.connection.cursor()
+        cursor = self.dbConnection.cursor()
         cursor.execute(self.query)
         r = list(cursor.fetchall())
         cursor.close()
-        #self.sql.connection.close()
+        #self.dbConnection.connection.close()
         return r
 
     def push(self, modelType, *argv):
@@ -95,9 +96,8 @@ class Models:
             print("Error! Empty query / unsupported ModelType")
             return
 
-        conn=self.sql.connection
-        cursor = conn.cursor()
+        cursor = self.dbConnection.cursor()
         results = cursor.execute(self.query)
-        conn.commit()
+        self.dbConnection.commit()
         cursor.close()
         return results

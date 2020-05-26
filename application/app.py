@@ -53,7 +53,7 @@ def infoPage():
     #Grab the id from url parameters
     id = request.args.get("id")
     #Fetch model
-    data = Models(mysql).fetch(ModelType.INFO_FOR_ID, id)
+    data = Models(mysql.connection).fetch(ModelType.INFO_FOR_ID, id)
 
     #If the data returned is not exactly 1, go to home page
     if(len(data) != 1):
@@ -87,7 +87,7 @@ def saveSettings():
     }
 
     #Get current copy of settings
-    a = Models(mysql).fetch(ModelType.APP_SETTINGS)
+    a = Models(mysql.connection).fetch(ModelType.APP_SETTINGS)
     d = json.loads(a[0]['settings'])
 
     if(request.method == 'POST'):
@@ -152,12 +152,12 @@ def saveSettings():
         print(jsonStr)
 
         #Push to database
-        m = Models(mysql).push(ModelType.APP_SETTINGS, jsonStr)
+        m = Models(mysql.connection).push(ModelType.APP_SETTINGS, jsonStr)
         print("Settings saved. m=",m)
         print("************* END *************")
 
         #Refetch from database
-        a = Models(mysql).fetch(ModelType.APP_SETTINGS)
+        a = Models(mysql.connection).fetch(ModelType.APP_SETTINGS)
 
         #Invoke settingsChange handler
         ambientSoundscapeThread = Thread(target=interface.settingsChangeHandler(), args=[1, 4])
@@ -187,7 +187,7 @@ def settings():
     }
 
     #data = fetchAppSettings()
-    a = Models(mysql).fetch(ModelType.APP_SETTINGS)
+    a = Models(mysql.connection).fetch(ModelType.APP_SETTINGS)
     settings = a[0]
     #print("\nSettings fetched. id=", settings['id'])
     #print("Settings: ",settings)
@@ -216,10 +216,10 @@ def settings():
     #print(d['volume'])
 
     #Fetch options for 'landscape'
-    landscapeLocations = Models(mysql).fetch(ModelType.LIST_OF_LOCATIONS)
+    landscapeLocations = Models(mysql.connection).fetch(ModelType.LIST_OF_LOCATIONS)
     
     #Fetch options for 'ambience'
-    soundscapes = Models(mysql).fetch(ModelType.LIST_OF_SOUNDSCAPES_FOR_LOC, d['landscape'])
+    soundscapes = Models(mysql.connection).fetch(ModelType.LIST_OF_SOUNDSCAPES_FOR_LOC, d['landscape'])
     emptyItem = {'name' : 'None'}
     soundscapes.insert(0, emptyItem)
     #print(soundscapes)
@@ -308,7 +308,7 @@ def onStage():
     refetch = True
     while refetch==True:
         entries = None
-        entries = Models(mysql).fetch(ModelType.ACTIVE_ENTRIES)
+        entries = Models(mysql.connection).fetch(ModelType.ACTIVE_ENTRIES)
         entries = [e['id'] for e in entries]
         print("\nfetchActiveEntries: ", json.dumps(entries))
         if(len(entries)==0):
@@ -350,7 +350,7 @@ def idData():
         print("Rejecting request because it is too old", jsonObj)
         return jsonify(jsonObj)
 
-    entries = Models(mysql).fetch(ModelType.METADATA_FOR_IDS, comma_separated_ids)
+    entries = Models(mysql.connection).fetch(ModelType.METADATA_FOR_IDS, comma_separated_ids)
     print("\nConverting entries to JSON:")
     print(json.dumps(entries, cls=dte))
 
@@ -375,7 +375,7 @@ def combinatoricData():
     r = int(request.args.get("channels"))
     logger("_INFO_", "location=", location)
 
-    d = Models(mysql).fetch(ModelType.LOCATION_INFO, location)
+    d = Models(mysql.connection).fetch(ModelType.LOCATION_INFO, location)
 
     logger("_INFO_", "d=", d)
     logger("_INFO_", "d[totalBirdSounds]=", d[0]['totalBirdSounds'])
