@@ -142,7 +142,8 @@ def processMotionTrigger(**kwargs):
     
     #Purge dead entries
     #Fetch
-    activeEntries = models.fetchModel(models.ModelType.ACTIVE_ENTRIES)
+    #activeEntries = models.fetchModel(models.ModelType.ACTIVE_ENTRIES)
+    activeEntries = Models(models.connectToDatabase()).fetch(ModelType.ACTIVE_ENTRIES)
     activeEntries = [d[dbc.KEY_ID] for d in activeEntries]
 
     #3. Verify that number of active entries don't exceed maximum allowed
@@ -150,7 +151,7 @@ def processMotionTrigger(**kwargs):
         purged = purgeDeadEntries(60)
         if(purged > 0):
             logger("_INFO_", purged, "Entries purged")
-            activeEntries = models.fetchModel(models.ModelType.ACTIVE_ENTRIES)
+            activeEntries = Models(models.connectToDatabase()).fetch(ModelType.ACTIVE_ENTRIES)
 
     logger("_INFO_", "Active entries:", activeEntries)
     logger("_INFO_", "Active/maxAllowed=", len(activeEntries), "/", maxNumberOfAllowedSimultaneousChannels())
