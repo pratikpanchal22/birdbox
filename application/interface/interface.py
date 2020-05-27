@@ -40,8 +40,7 @@ def updateGlobalSettings():
     try:
         #appSettings = json.loads(models.fetchModel(models.ModelType.APP_SETTINGS)[0][dbc.KEY_SETTINGS])
 
-        dbConn = models.connectToDatabase()
-        appSettings = json.loads(Models(dbConn).fetch(ModelType.APP_SETTINGS)[0][dbc.KEY_SETTINGS])
+        appSettings = json.loads(Models(models.connectToDatabase()).fetch(ModelType.APP_SETTINGS)[0][dbc.KEY_SETTINGS])
     except Exception as e:
         logger("_ERROR_", "Error: Unable to fetch data from database")
         logger("_EXCEPTION_", str(e))
@@ -224,7 +223,7 @@ def getCandidateAudioFiles(modelType, numberOfChannels):
     
     #Scope: 
     # (1) Fetch all sorted by last_updated asc
-    data = models.fetchModel(models.ModelType.IDS_NAMES_AUDIOFILE_SORTED_BY_LAST_UPDATED_OLDEST_FIRST)
+    data = Models(models.connectToDatabase()).fetch(ModelType.IDS_NAMES_AUDIOFILE_SORTED_BY_LAST_UPDATED_OLDEST_FIRST)
     # (2) Select one t random from top 75% of that list
     #for d in data:
     #    print("New line")
@@ -331,7 +330,7 @@ def settingsChangeHandler():
     global ambientAudioChannel1, ambientAudioChannel2
     updateGlobalSettings()
 
-    m1 = models.fetchModel(models.ModelType.APP_SETTINGS)
+    m1 = Models(models.connectToDatabase()).fetch(ModelType.APP_SETTINGS)
     logger("_INFO_", "\nLatest settings: id=", m1[0][dbc.KEY_ID])
 
     m2 = models.fetchModel(models.ModelType.APP_SETTINGS_FOR_ID, m1[0][dbc.KEY_ID]-1)

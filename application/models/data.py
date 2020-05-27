@@ -15,6 +15,7 @@ class ModelType(Enum):
     LIST_OF_LOCATIONS = 5
     LIST_OF_SOUNDSCAPES_FOR_LOC = 6
     LOCATION_INFO = 7
+    IDS_NAMES_AUDIOFILE_SORTED_BY_LAST_UPDATED_OLDEST_FIRST = 8
     #Push
 
 class Models:
@@ -27,11 +28,18 @@ class Models:
         self.modelType = modelType
         
         if(self.modelType == ModelType.ACTIVE_ENTRIES):
-            self.query = "SELECT "+dbc.KEY_ID+" FROM birdboxTable WHERE ("+dbc.KEY_ACTIVE+" = true AND "+dbc.KEY_AUDIO_TYPE+" != '"+dbc.KEY_AUDIO_TYPE_VAL_SOUNDSCAPE+"');"
+            self.query = ("SELECT "+dbc.KEY_ID+" FROM birdboxTable WHERE ("
+                              +dbc.KEY_ACTIVE+" = true AND "
+                              +dbc.KEY_AUDIO_TYPE+" != '"
+                              +dbc.KEY_AUDIO_TYPE_VAL_SOUNDSCAPE+"');")
+        
         elif(self.modelType == ModelType.APP_SETTINGS):
-            self.query = "SELECT "+dbc.KEY_ID+", "+dbc.KEY_LAST_UPDATED+", "+dbc.KEY_SETTINGS+" "+" FROM "+dbc.TABLE_SETTINGS+" ORDER BY "+dbc.KEY_ID+" DESC LIMIT 1;"
+            self.query = ("SELECT "+dbc.KEY_ID+", "+dbc.KEY_LAST_UPDATED+", "+dbc.KEY_SETTINGS+" "
+                              +" FROM "+dbc.TABLE_SETTINGS+" ORDER BY "+dbc.KEY_ID+" DESC LIMIT 1;")
+        
         elif(self.modelType == ModelType.LIST_OF_LOCATIONS):
             self.query = "SELECT DISTINCT "+dbc.KEY_LOCATION+" from birdboxTable;"
+        
         elif(self.modelType == ModelType.LIST_OF_SOUNDSCAPES_FOR_LOC):
             try:
                 loc = argv[0]
@@ -39,6 +47,7 @@ class Models:
                 print("ERROR: Expected location")
                 return
             self.query = "SELECT "+dbc.KEY_NAME+" from birdboxTable WHERE ("+dbc.KEY_AUDIO_TYPE+" = '"+dbc.KEY_AUDIO_TYPE_VAL_SOUNDSCAPE+"' AND "+dbc.KEY_LOCATION+" = '"+loc+"');"
+        
         elif(self.modelType == ModelType.METADATA_FOR_IDS):
             try:
                 comma_separated_ids = argv[0]
@@ -46,7 +55,10 @@ class Models:
                 print("ERROR: Expected comma_sep_values")
                 return
             comma_separated_ids = argv[0]
-            self.query = "SELECT "+dbc.KEY_ID+", "+dbc.KEY_NAME+", "+dbc.KEY_IMAGE_FILE+" "+" FROM birdboxTable where "+dbc.KEY_ID+" in (" + comma_separated_ids + ");"
+            self.query = ("SELECT "+dbc.KEY_ID+", "+dbc.KEY_NAME+", "+dbc.KEY_IMAGE_FILE+" "
+                                  +" FROM birdboxTable where "
+                                  +dbc.KEY_ID+" in (" + comma_separated_ids + ");")
+        
         elif(self.modelType == ModelType.INFO_FOR_ID):
             try:
                 id = argv[0]
@@ -54,6 +66,7 @@ class Models:
                 print("ERROR: Expected id")
                 return
             self.query = "SELECT "+dbc.KEY_ID+", "+dbc.KEY_NAME+", "+dbc.KEY_AUDIO_FILE+", "+dbc.KEY_AUDIO_TYPE+", "+dbc.KEY_DESCRIPTION+", "+dbc.KEY_DURATION+", "+dbc.KEY_CREDIT+", "+dbc.KEY_DATE_CREATED_OR_CAPTURED+", "+dbc.KEY_IMAGE_FILE+", "+dbc.KEY_IMAGE_DESC+", "+dbc.KEY_LOCATION+", "+dbc.KEY_URL+" "+" FROM birdboxTable where "+dbc.KEY_ID+" = " + str(id)+";"
+        
         elif(self.modelType == ModelType.LOCATION_INFO):
             try:
                 loc = argv[0]
@@ -65,6 +78,12 @@ class Models:
                             + "(SELECT COUNT(distinct audio_file) FROM birdboxTable WHERE audio_type != 'soundscape' and location = '"+str(loc)+"') as totalBirdSounds, "
                             + "(SELECT COUNT(distinct audio_file) FROM birdboxTable WHERE audio_type = 'soundscape' and location = '"+str(loc)+"') as landscapeSounds "
                          +"FROM birdboxTable WHERE location = '"+str(loc)+"';")
+        
+        elif(self.modelType == ModelType.IDS_NAMES_AUDIOFILE_SORTED_BY_LAST_UPDATED_OLDEST_FIRST):
+            self.query = ("SELECT "+dbc.KEY_ID+", "+dbc.KEY_NAME+", "+dbc.KEY_AUDIO_FILE
+                            +" FROM birdboxTable WHERE "
+                            +dbc.KEY_AUDIO_TYPE+" != 'soundscape' ORDER BY "+dbc.KEY_LAST_INVOKED+" ASC;")
+        
         else:
             print("ERROR: Unsupported model type: ",str(self.modelType))
             return
