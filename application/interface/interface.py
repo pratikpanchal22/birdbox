@@ -10,11 +10,11 @@ import time
 #
 from common.audio_interface import AudioThread as at
 from common.audio_interface import AlsaVolume as av
-from models import dbConfig as dbc
 from common.utility import logger
-from models import models as models
+from models import dbConfig as dbc
 from models.data import Models
 from models.data import ModelType
+from models.data import Db
 
 #TRIGGER TYPES
 class TriggerType(Enum):
@@ -38,7 +38,7 @@ ambientAudioChannel2 = None
 def updateGlobalSettings():
     global appSettings
     try:
-        appSettings = json.loads(Models(models.connectToDatabase()).fetch(ModelType.APP_SETTINGS)[0][dbc.KEY_SETTINGS])
+        appSettings = json.loads(Models(Db(dbc.MYSQL_DB).connection()).fetch(ModelType.APP_SETTINGS)[0][dbc.KEY_SETTINGS])
     except Exception as e:
         logger("_ERROR_", "Error: Unable to fetch data from database")
         logger("_EXCEPTION_", str(e))
@@ -139,7 +139,7 @@ def processMotionTrigger(**kwargs):
     
     #Purge dead entries
     #Fetch
-    activeEntries = Models(models.connectToDatabase()).fetch(ModelType.ACTIVE_ENTRIES)
+    activeEntries = Models(Db(dbc.MYSQL_DB).connection()).fetch(ModelType.ACTIVE_ENTRIES)
     activeEntries = [d[dbc.KEY_ID] for d in activeEntries]
 
     #3. Verify that number of active entries don't exceed maximum allowed
@@ -147,7 +147,7 @@ def processMotionTrigger(**kwargs):
         purged = purgeDeadEntries(60)
         if(purged > 0):
             logger("_INFO_", purged, "Entries purged")
-            activeEntries = Models(models.connectToDatabase()).fetch(ModelType.ACTIVE_ENTRIES)
+            activeEntries = Models(Db(dbc.MYSQL_DB).connection()).fetch(ModelType.ACTIVE_ENTRIES)
 
     logger("_INFO_", "Active entries:", activeEntries)
     logger("_INFO_", "Active/maxAllowed=", len(activeEntries), "/", maxNumberOfAllowedSimultaneousChannels())
@@ -190,7 +190,7 @@ def processMotionTrigger(**kwargs):
     return
 
 def purgeDeadEntries(seconds):
-    return int(Models(models.connectToDatabase()).push(ModelType.UNSET_ACTIVE_FOR_DEAD_ENTRIES, seconds))
+    return int(Models(Db(dbc.MYSQL_DB).connection()).push(ModelType.UNSET_ACTIVE_FOR_DEAD_ENTRIES, seconds))
 
 def getAudioBasePath():
     cwd = os.getcwd()
@@ -206,7 +206,7 @@ def getAudioBasePath():
 def executeAudioFileOnSeparateThread(id, file):
     #print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
     #Use Id to mark entry as active
-    Models(models.connectToDatabase()).push(ModelType.FOR_ID_SET_ACTIVE_UPDATE_TS, id)
+    Models(Db(dbc.MYSQL_DB).connection()).push(ModelType.FOR_ID_SET_ACTIVE_UPDATE_TS, id)
     #logger("Id: ",id, " marked as active")
 
     #Run audio file
@@ -217,7 +217,7 @@ def executeAudioFileOnSeparateThread(id, file):
     os.system(osCmd)
     
     #Use Id to mark entry as inactive
-    Models(models.connectToDatabase()).push(ModelType.FOR_ID_UNSET_ACTIVE, id)
+    Models(Db(dbc.MYSQL_DB).connection()).push(ModelType.FOR_ID_UNSET_ACTIVE, id)
     logger("_INFO_", "End of executeAudioFileOnSeparateThread for ", file, "id=", id)
     return    
 
@@ -228,7 +228,7 @@ def getCandidateAudioFiles(modelType, numberOfChannels):
     
     #Scope: 
     # (1) Fetch all sorted by last_updated asc
-    data = Models(models.connectToDatabase()).fetch(ModelType.IDS_NAMES_AUDIOFILE_SORTED_BY_LAST_UPDATED_OLDEST_FIRST)
+    data = Models(Db(dbc.MYSQL_DB).connection()).fetch(ModelType.IDS_NAMES_AUDIOFILE_SORTED_BY_LAST_UPDATED_OLDEST_FIRST)
     # (2) Select one t random from top 75% of that list
     #for d in data:
     #    print("New line")
@@ -335,10 +335,10 @@ def settingsChangeHandler():
     global ambientAudioChannel1, ambientAudioChannel2
     updateGlobalSettings()
 
-    m1 = Models(models.connectToDatabase()).fetch(ModelType.APP_SETTINGS)
+    m1 = Models(Db(dbc.MYSQL_DB).connection()).fetch(ModelType.APP_SETTINGS)
     logger("_INFO_", "\nLatest settings: id=", m1[0][dbc.KEY_ID])
 
-    m2 = Models(models.connectToDatabase()).fetch(ModelType.APP_SETTINGS_FOR_ID, m1[0][dbc.KEY_ID]-1)
+    m2 = Models(Db(dbc.MYSQL_DB).connection()).fetch(ModelType.APP_SETTINGS_FOR_ID, m1[0][dbc.KEY_ID]-1)
     logger("_INFO_", "Previous settings: id=", m2[0][dbc.KEY_ID])
 
     sNew = json.loads(m1[0][dbc.KEY_SETTINGS])
@@ -401,7 +401,7 @@ def processUpstageSoundscape(ch, **kwargs):
                 terminateSoundscapeAudioThread(ch)
                 return
             else:
-                d = Models(models.connectToDatabase()).fetch(ModelType.ID_FILE_FOR_NAME, value)[0]
+                d = Models(Db(dbc.MYSQL_DB).connection()).fetch(ModelType.ID_FILE_FOR_NAME, value)[0]
                 atSettings['fp'] = getAudioBasePath()+d[dbc.KEY_AUDIO_FILE]
         elif(key == 'endTime'):
             atSettings['terminateAt'] = value
@@ -468,7 +468,7 @@ def disableAmbientChannelAndUpdateSettings(ch):
         return
 
     #Update app settings in-place
-    a = Models(models.connectToDatabase()).push(ModelType.UPDATE_APP_SETTINGS_IN_PLACE, str(queryFrag))
+    a = Models(Db(dbc.MYSQL_DB).connection()).push(ModelType.UPDATE_APP_SETTINGS_IN_PLACE, str(queryFrag))
     logger("_INFO_", "Settings updated inplace in database. Return: ", str(a))
     return
 

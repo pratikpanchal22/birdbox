@@ -14,11 +14,12 @@ from decimal import Decimal
 #
 from common.utility import logger
 from common.audio_interface import AlsaVolume as av
+from common.utility import DateTimeEncoder as dte
 from models import dbConfig as dbc
 from models.data import Models
 from models.data import ModelType
 from interface import interface as interface
-from common.utility import DateTimeEncoder as dte
+
 
 apl = Flask(__name__)
 
