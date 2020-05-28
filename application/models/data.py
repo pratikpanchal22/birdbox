@@ -19,6 +19,10 @@ class ModelType(Enum):
     IDS_NAMES_AUDIOFILE_SORTED_BY_LAST_UPDATED_OLDEST_FIRST = 9
     ID_FILE_FOR_NAME = 10
     #Push
+    UNSET_ACTIVE_FOR_DEAD_ENTRIES = 11
+    FOR_ID_SET_ACTIVE_UPDATE_TS = 12
+    FOR_ID_UNSET_ACTIVE = 13
+    UPDATE_APP_SETTINGS_IN_PLACE = 14
 
 class Models:
     def __init__(self, dbConn):
@@ -107,7 +111,7 @@ class Models:
                              +" WHERE "+dbc.KEY_NAME+" = '"+str(name)+"';")
 
         else:
-            print("ERROR: Unsupported model type: ",str(self.modelType))
+            print("ERROR: Unsupported model type for method:fetch : ",str(self.modelType))
             return
         
         if(self.query == ""):
@@ -132,6 +136,52 @@ class Models:
                 print("ERROR: Expected string of settings")
                 return
             self.query = "INSERT INTO "+dbc.TABLE_SETTINGS+" ("+dbc.KEY_SETTINGS+") VALUES ('" + s + "');"
+
+        elif(self.modelType == ModelType.UNSET_ACTIVE_FOR_DEAD_ENTRIES):
+            try:
+                seconds = argv[0]
+            except:
+                print("WARNING: Expected seconds offset. Defaulting to 10")
+                seconds = 10
+
+            self.query = ("UPDATE birdboxTable SET "+dbc.KEY_ACTIVE+" = false WHERE "
+                            +dbc.KEY_ACTIVE+" = true AND UNIX_TIMESTAMP()-UNIX_TIMESTAMP("
+                            +dbc.KEY_LAST_UPDATED+")>duration+"+str(seconds)+";")
+
+        elif(self.modelType == ModelType.FOR_ID_SET_ACTIVE_UPDATE_TS):
+            try:
+                id = argv[0]
+            except:
+                print("ERROR: Expected id")
+                return
+            self.query = ("UPDATE birdboxTable SET "
+                             +dbc.KEY_LAST_INVOKED+" = now(), "
+                             +dbc.KEY_ACTIVE+" = true WHERE "
+                             +dbc.KEY_ID+" = "+str(id)+";")
+
+        elif(self.modelType == ModelType.FOR_ID_UNSET_ACTIVE):
+            try:
+                id = argv[0]
+            except:
+                print("ERROR: Expected id")
+                return
+            self.query = ("UPDATE birdboxTable SET "
+                             +dbc.KEY_ACTIVE+" = false WHERE "
+                             +dbc.KEY_ID+" = "+str(id)+";")
+
+        elif(self.modelType == ModelType.UPDATE_APP_SETTINGS_IN_PLACE):
+            try:
+                s = argv[0]
+            except:
+                print("ERROR: Expected query fragment string")
+                return
+            self.query = ("UPDATE "+dbc.TABLE_SETTINGS
+                            +" SET settings = JSON_SET(settings, "+s+")"
+                            +" WHERE id = (SELECT max(id) FROM "+dbc.TABLE_SETTINGS+");")
+
+        else:
+            print("ERROR: Unsupported model type for method:push : ",str(self.modelType))
+            return
 
         if(self.query == ""):
             print("Error! Empty query / unsupported ModelType")

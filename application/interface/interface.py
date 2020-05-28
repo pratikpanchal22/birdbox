@@ -189,27 +189,35 @@ def processMotionTrigger(**kwargs):
     logger("_INFO_", "{} {}".format("ALL CHILD THREADS COMPLETED: for parent thread: ", str(current_thread().name)))    
     return
 
-def purgeDeadEntries(seconds):    
-    return int(models.fetchModel(models.ModelType.UNSET_ACTIVE_FOR_DEAD_ENTRIES, seconds))
+def purgeDeadEntries(seconds):
+    return int(Models(models.connectToDatabase()).push(ModelType.UNSET_ACTIVE_FOR_DEAD_ENTRIES, seconds))
+
+def getAudioBasePath():
+    cwd = os.getcwd()
+    if cwd.endswith("/birdbox"):
+        cwd += "/application"
+    
+    if cwd.endswith("/application"):
+        cwd += "/static/sounds/"
+        return cwd
+
+    return ""
 
 def executeAudioFileOnSeparateThread(id, file):
     #print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
     #Use Id to mark entry as active
-    models.fetchModel(models.ModelType.FOR_ID_SET_ACTIVE_UPDATE_TS, id)
+    Models(models.connectToDatabase()).push(ModelType.FOR_ID_SET_ACTIVE_UPDATE_TS, id)
     #logger("Id: ",id, " marked as active")
 
     #Run audio file
     #audioCmd = "mpg321 --gain 10 --verbose --quiet"
     audioCmd = "mpg321 --gain "+str(maxVolume())+" --quiet"
-    #logger("_INFO", "os command running from directory: ")
-    #os.system("pwd")
-    basePath = "/home/pratikpanchal/birdbox/application/static/sounds/"
-    osCmd = audioCmd + " " + basePath + file
+    osCmd = audioCmd + " " + getAudioBasePath() + file
     #logger("_INFO_","os.command: ",osCmd)
     os.system(osCmd)
     
     #Use Id to mark entry as inactive
-    models.fetchModel(models.ModelType.FOR_ID_UNSET_ACTIVE, id)
+    Models(models.connectToDatabase()).push(ModelType.FOR_ID_UNSET_ACTIVE, id)
     logger("_INFO_", "End of executeAudioFileOnSeparateThread for ", file, "id=", id)
     return    
 
@@ -386,8 +394,6 @@ def processUpstageSoundscape(ch, **kwargs):
     except KeyError:
         logger("_INFO_", ch," won't be terminated")
     
-    basePath = "/home/pratikpanchal/birdbox/application/static/sounds/"
-
     atSettings = {}
     for key, value in kwargs.items():
         if(key == 'name'):
@@ -396,7 +402,7 @@ def processUpstageSoundscape(ch, **kwargs):
                 return
             else:
                 d = Models(models.connectToDatabase()).fetch(ModelType.ID_FILE_FOR_NAME, value)[0]
-                atSettings['fp'] = basePath+d[dbc.KEY_AUDIO_FILE]
+                atSettings['fp'] = getAudioBasePath()+d[dbc.KEY_AUDIO_FILE]
         elif(key == 'endTime'):
             atSettings['terminateAt'] = value
         elif(key == 'vol'):
@@ -462,7 +468,7 @@ def disableAmbientChannelAndUpdateSettings(ch):
         return
 
     #Update app settings in-place
-    a = models.fetchModel(models.ModelType.UPDATE_APP_SETTINGS_IN_PLACE, str(queryFrag))
+    a = Models(models.connectToDatabase()).push(ModelType.UPDATE_APP_SETTINGS_IN_PLACE, str(queryFrag))
     logger("_INFO_", "Settings updated inplace in database. Return: ", str(a))
     return
 
