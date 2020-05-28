@@ -12,10 +12,12 @@ class ModelType(Enum):
     METADATA_FOR_IDS = 2
     INFO_FOR_ID = 3
     APP_SETTINGS = 4
-    LIST_OF_LOCATIONS = 5
-    LIST_OF_SOUNDSCAPES_FOR_LOC = 6
-    LOCATION_INFO = 7
-    IDS_NAMES_AUDIOFILE_SORTED_BY_LAST_UPDATED_OLDEST_FIRST = 8
+    APP_SETTINGS_FOR_ID = 5
+    LIST_OF_LOCATIONS = 6
+    LIST_OF_SOUNDSCAPES_FOR_LOC = 7
+    LOCATION_INFO = 8
+    IDS_NAMES_AUDIOFILE_SORTED_BY_LAST_UPDATED_OLDEST_FIRST = 9
+    ID_FILE_FOR_NAME = 10
     #Push
 
 class Models:
@@ -37,6 +39,16 @@ class Models:
             self.query = ("SELECT "+dbc.KEY_ID+", "+dbc.KEY_LAST_UPDATED+", "+dbc.KEY_SETTINGS+" "
                               +" FROM "+dbc.TABLE_SETTINGS+" ORDER BY "+dbc.KEY_ID+" DESC LIMIT 1;")
         
+        elif(self.modelType == ModelType.APP_SETTINGS_FOR_ID):
+            try:
+                id = argv[0]
+            except:
+                print("ERROR: Expected id")
+                return
+            self.query = ("SELECT "+dbc.KEY_ID+", "+dbc.KEY_LAST_UPDATED+", "+dbc.KEY_SETTINGS+" "
+                              +" FROM "+dbc.TABLE_SETTINGS
+                              +" WHERE "+dbc.KEY_ID+" = " +str(id)+";")
+
         elif(self.modelType == ModelType.LIST_OF_LOCATIONS):
             self.query = "SELECT DISTINCT "+dbc.KEY_LOCATION+" from birdboxTable;"
         
@@ -84,6 +96,16 @@ class Models:
                             +" FROM birdboxTable WHERE "
                             +dbc.KEY_AUDIO_TYPE+" != 'soundscape' ORDER BY "+dbc.KEY_LAST_INVOKED+" ASC;")
         
+        elif(self.modelType == ModelType.ID_FILE_FOR_NAME):
+            try:
+                name = argv[0]
+            except:
+                print("Error: Expected name")
+                return
+            self.query = ("SELECT "+dbc.KEY_ID+", "+dbc.KEY_AUDIO_FILE
+                             +" FROM birdboxTable"
+                             +" WHERE "+dbc.KEY_NAME+" = '"+str(name)+"';")
+
         else:
             print("ERROR: Unsupported model type: ",str(self.modelType))
             return

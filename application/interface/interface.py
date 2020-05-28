@@ -38,8 +38,6 @@ ambientAudioChannel2 = None
 def updateGlobalSettings():
     global appSettings
     try:
-        #appSettings = json.loads(models.fetchModel(models.ModelType.APP_SETTINGS)[0][dbc.KEY_SETTINGS])
-
         appSettings = json.loads(Models(models.connectToDatabase()).fetch(ModelType.APP_SETTINGS)[0][dbc.KEY_SETTINGS])
     except Exception as e:
         logger("_ERROR_", "Error: Unable to fetch data from database")
@@ -141,7 +139,6 @@ def processMotionTrigger(**kwargs):
     
     #Purge dead entries
     #Fetch
-    #activeEntries = models.fetchModel(models.ModelType.ACTIVE_ENTRIES)
     activeEntries = Models(models.connectToDatabase()).fetch(ModelType.ACTIVE_ENTRIES)
     activeEntries = [d[dbc.KEY_ID] for d in activeEntries]
 
@@ -333,7 +330,7 @@ def settingsChangeHandler():
     m1 = Models(models.connectToDatabase()).fetch(ModelType.APP_SETTINGS)
     logger("_INFO_", "\nLatest settings: id=", m1[0][dbc.KEY_ID])
 
-    m2 = models.fetchModel(models.ModelType.APP_SETTINGS_FOR_ID, m1[0][dbc.KEY_ID]-1)
+    m2 = Models(models.connectToDatabase()).fetch(ModelType.APP_SETTINGS_FOR_ID, m1[0][dbc.KEY_ID]-1)
     logger("_INFO_", "Previous settings: id=", m2[0][dbc.KEY_ID])
 
     sNew = json.loads(m1[0][dbc.KEY_SETTINGS])
@@ -398,7 +395,7 @@ def processUpstageSoundscape(ch, **kwargs):
                 terminateSoundscapeAudioThread(ch)
                 return
             else:
-                d = models.fetchModel(models.ModelType.ID_FILE_FOR_NAME, value)[0]
+                d = Models(models.connectToDatabase()).fetch(ModelType.ID_FILE_FOR_NAME, value)[0]
                 atSettings['fp'] = basePath+d[dbc.KEY_AUDIO_FILE]
         elif(key == 'endTime'):
             atSettings['terminateAt'] = value
