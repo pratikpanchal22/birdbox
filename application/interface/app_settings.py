@@ -31,8 +31,13 @@ class AppSettings:
     def getSettings(self):
         return json.loads(self._appSettings[0][dbc.KEY_SETTINGS])
 
-    def update(self):
+    def refresh(self):
         self.__fetchModel()
+        return
+
+    def save(self, jsonStr):
+        Models(Db(dbc.MYSQL_DB).connection()).push(ModelType.APP_SETTINGS, jsonStr)
+        self.refresh()
         return
 
     def __fetchModel(self):

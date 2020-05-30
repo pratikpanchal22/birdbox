@@ -19,6 +19,7 @@ from models import dbConfig as dbc
 from models.data import Models
 from models.data import ModelType
 from interface import interface as interface
+from interface.app_settings import AppSettings
 
 
 apl = Flask(__name__)
@@ -80,6 +81,8 @@ def infoPage():
 @apl.route("/saveSettings.json", methods=['post', 'get'])
 def saveSettings():
 
+    logger("_INFO_", "Entering@:", str(int(time.time())))
+
     ts = str(int(time.time()))
     response = {
         "state":"unsuccessful",
@@ -88,14 +91,14 @@ def saveSettings():
     }
 
     #Get current copy of settings
-    a = Models(mysql.connection).fetch(ModelType.APP_SETTINGS)
-    d = json.loads(a[0]['settings'])
+    a = AppSettings()
+    #logger("_INFO_", "Current settings id=", a.getId())
+    d = a.getSettings()
 
     if(request.method == 'POST'):
-        print("\n\n *********** form data ******************")
-        print("request.data: ", request.data)
-        print("request.form: ", request.form)
-        
+        #logger("_INFO_", "\n*********** form data ******************")
+        #logger("_INFO_", "request.form: ", request.form)
+
         #if(request.form.get('cbSwitch')): print('cbSwitch checked')
         #if(request.form.get('upstageSwitch')): print('upstageSwitch checked')
         #if(request.form.get('mtEnabled')): print('mtEnabled checked')
@@ -104,7 +107,8 @@ def saveSettings():
         #if(request.form.get('silentPeriod')): print('silentPeriod checked')
 
         for field in list(request.form):
-            print(field, "=", request.form.get(field)) #.name, " ==== ", field.description, " ==== ", field.label.text, " ==== ", field.data)
+            #print(field, "=", request.form.get(field)) #.name, " ==== ", field.description, " ==== ", field.label.text, " ==== ", field.data)
+            #logger("_INFO_", " >>> ", field, "=", request.form.get(field))
 
             #Values
             if(field == "landscape"): d['landscape'] = request.form.get(field)
@@ -130,7 +134,9 @@ def saveSettings():
                  field == "motionTriggers.enabled" or
                  field == "symphony.enabled" or
                  field == "symphony.limitToSameType" or
-                 field == "silentPeriod.enabled"): logger("_INFO_", "Checkbox", field, "handled outside loop")
+                 field == "silentPeriod.enabled"): 
+                    #logger("_INFO_", "Checkbox", field, "handled outside loop")
+                    continue
 
             else: logger("_INFO_", "ERROR! Form field/value: ", field,"/",request.form.get(field)," NOT BEING HANDLED")
         
@@ -146,19 +152,14 @@ def saveSettings():
 
         d['silentPeriod']['enabled'] = True if(request.form.get("silentPeriod.enabled")) else False
 
-
         #Convert to json
         jsonStr = json.dumps(d)
-        print("jsonStr type: ",type(jsonStr))
-        print(jsonStr)
+        #logger("_INFO_", "Json settings string to be saved: ", jsonStr)
 
         #Push to database
-        m = Models(mysql.connection).push(ModelType.APP_SETTINGS, jsonStr)
-        print("Settings saved. m=",m)
-        print("************* END *************")
-
-        #Refetch from database
-        a = Models(mysql.connection).fetch(ModelType.APP_SETTINGS)
+        a.save(jsonStr)
+        #logger("_INFO_", "\nSettings saved. New id=",a.getId())
+        #logger("_INFO_", "************* END *************")
 
         #Invoke settingsChange handler
         ambientSoundscapeThread = Thread(target=interface.settingsChangeHandler(), args=[1, 4])
@@ -168,8 +169,9 @@ def saveSettings():
         #Set state of response
         response['state'] = 'successful'
 
-    print("Last updated: ", a[0]['last_updated'], " time-zone:", datetime.datetime.now(tzlocal()).tzname())
-    response['last_updated'] = str(a[0]['last_updated']) + " " + datetime.datetime.now(tzlocal()).tzname()
+    #logger("_INFO_", "Last updated: ", a.getLastUpdated(), " time-zone:", datetime.datetime.now(tzlocal()).tzname())
+    response['last_updated'] = str(a.getLastUpdated()) + " " + datetime.datetime.now(tzlocal()).tzname()
+    logger("_INFO_", "Exiting@:", str(int(time.time())))
     return(jsonify(response))
 
 @apl.route("/settings.html", methods=['post', 'get'])
@@ -187,17 +189,8 @@ def settings():
         'cssInclude' : cssInclude
     }
 
-    #data = fetchAppSettings()
-    a = Models(mysql.connection).fetch(ModelType.APP_SETTINGS)
-    settings = a[0]
-    #print("\nSettings fetched. id=", settings['id'])
-    #print("Settings: ",settings)
-    #print("Type of settings: ", type(settings))
-
-    #print(settings['settings'])
-    s = settings['settings']
-    #print("Type of s: ", type(s))
-    d = json.loads(s)
+    a = AppSettings()
+    d = a.getSettings()
     #print("Type of d: ", type(d))
 
     #print(settings['settings']['continuousPlayback']['enabled'])
@@ -221,9 +214,10 @@ def settings():
     
     #Fetch options for 'ambience'
     soundscapes = Models(mysql.connection).fetch(ModelType.LIST_OF_SOUNDSCAPES_FOR_LOC, d['landscape'])
+    
+    #Insert an empty item as an option for user to select
     emptyItem = {'name' : 'None'}
     soundscapes.insert(0, emptyItem)
-    #print(soundscapes)
 
     #Prepopulate endTime if continuousPlayback is disabled
     if(d['continuousPlayback']['enabled'] == False):
@@ -231,7 +225,7 @@ def settings():
         d['continuousPlayback']['endTime'] = defaultEndTime.strftime("%H:%M")
 
     settingsTemplateData = {
-        'last_updated' : settings['last_updated'],
+        'last_updated' : a.getLastUpdated(),
         
         'landscape' : d['landscape'],
         'landscapeLocations' : landscapeLocations,
@@ -311,7 +305,7 @@ def onStage():
         entries = None
         entries = Models(mysql.connection).fetch(ModelType.ACTIVE_ENTRIES)
         entries = [e['id'] for e in entries]
-        print("\nfetchActiveEntries: ", json.dumps(entries))
+        logger("_INFO_", "\nfetchActiveEntries: ", json.dumps(entries))
         if(len(entries)==0):
             jsonObj["state"] = "empty"
             refetch = False
