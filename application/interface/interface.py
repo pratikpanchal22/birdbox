@@ -14,7 +14,7 @@ from common.utility import logger
 from models import dbConfig as dbc
 from models.data import Models
 from models.data import ModelType
-from models.data import Db
+from models.database import Db
 from interface.app_settings import AppSettings
 
 #TRIGGER TYPES
