@@ -15,6 +15,7 @@ from models import dbConfig as dbc
 from models.data import Models
 from models.data import ModelType
 from models.data import Db
+from interface.app_settings import AppSettings
 
 #TRIGGER TYPES
 class TriggerType(Enum):
@@ -335,14 +336,14 @@ def settingsChangeHandler():
     global ambientAudioChannel1, ambientAudioChannel2
     updateGlobalSettings()
 
-    m1 = Models(Db(dbc.MYSQL_DB).connection()).fetch(ModelType.APP_SETTINGS)
-    logger("_INFO_", "\nLatest settings: id=", m1[0][dbc.KEY_ID])
+    latestSettings = AppSettings()
+    logger("_INFO_", "\nLatest settings: id=", str(latestSettings.getId()))
 
-    m2 = Models(Db(dbc.MYSQL_DB).connection()).fetch(ModelType.APP_SETTINGS_FOR_ID, m1[0][dbc.KEY_ID]-1)
-    logger("_INFO_", "Previous settings: id=", m2[0][dbc.KEY_ID])
+    previousSettings = AppSettings(id=latestSettings.getId()-1)
+    logger("_INFO_", "Previous settings: id=", previousSettings.getId())
 
-    sNew = json.loads(m1[0][dbc.KEY_SETTINGS])
-    sOld = json.loads(m2[0][dbc.KEY_SETTINGS])
+    sNew = latestSettings.getSettings()
+    sOld = previousSettings.getSettings()
     logger("_INFO_", "\n    ### Current Settings: ", sNew)
     logger("_INFO_", "\n    ### Previous Settings: ", sOld)
 
