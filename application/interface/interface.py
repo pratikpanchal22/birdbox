@@ -211,8 +211,7 @@ def executeAudioFileOnSeparateThread(id, file):
     #logger("Id: ",id, " marked as active")
 
     #Run audio file
-    #audioCmd = "mpg321 --gain 10 --verbose --quiet"
-    audioCmd = "mpg321 --gain "+str(maxVolume())+" --quiet"
+    audioCmd = "mpg321 --gain 100 --quiet"
     osCmd = audioCmd + " " + getAudioBasePath() + file
     #logger("_INFO_","os.command: ",osCmd)
     os.system(osCmd)
