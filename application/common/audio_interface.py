@@ -1,4 +1,3 @@
-import threading  
 import time 
 import subprocess 
 from dateutil import parser
@@ -100,6 +99,11 @@ class AudioThread(threading.Thread):
             exit()
 
         try:
+            self._repeat = kwargs['repeat']
+        except KeyError:
+            self._repeat = True
+
+        try:
             self.name = kwargs['tName']
         except KeyError:
             self.name = "AudioThread"+str(round(time.monotonic() * 1000))
@@ -135,6 +139,7 @@ class AudioThread(threading.Thread):
         logger("_INFO_", "Frames per millisecond: ", self.framePerMs)
         logger("_INFO_", "Starting frame: ", self.startingFrame)
         logger("_INFO_", "Switching offset: ", self.switchingOffset)
+        logger("_INFO_", "Repeat: ", self._repeat)
 
         AudioThread.instanceCount += 1
         logger("_INFO_", "AudioThread instance count: ", AudioThread.instanceCount)

@@ -35,6 +35,7 @@ randomizeNumberOfChannels = True #TODO: get this from settings
 appSettings = ""
 ambientAudioChannel1 = None
 ambientAudioChannel2 = None
+candidateAudioThreads = []
 
 def updateGlobalSettings():
     global appSettings
@@ -168,7 +169,10 @@ def processMotionTrigger(**kwargs):
             numberOfChannels = maxNumberOfAllowedSimultaneousChannels() - len(activeEntries)
     
     candidates = getCandidateAudioFiles(CandidateSelectionModels.RNDM_TOP_75PC, numberOfChannels)
+
+    return candidates
     
+    """ audio threads will be managed by the caller
     #print("Candidate audio files:")
     logger("_INFO", "\nFINAL CANDIDATES. Requesting:")
     threads = []
@@ -189,38 +193,7 @@ def processMotionTrigger(**kwargs):
 
     logger("_INFO_", "{} {}".format("ALL CHILD THREADS COMPLETED: for parent thread: ", str(current_thread().name)))    
     return
-
-def purgeDeadEntries(seconds):
-    return int(Models(Db(dbc.MYSQL_DB).connection()).push(ModelType.UNSET_ACTIVE_FOR_DEAD_ENTRIES, seconds))
-
-def getAudioBasePath():
-    cwd = os.getcwd()
-    if cwd.endswith("/birdbox"):
-        cwd += "/application"
-    
-    if cwd.endswith("/application"):
-        cwd += "/static/sounds/"
-        return cwd
-
-    return ""
-
-def executeAudioFileOnSeparateThread(id, file):
-    #print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
-    #Use Id to mark entry as active
-    Models(Db(dbc.MYSQL_DB).connection()).push(ModelType.FOR_ID_SET_ACTIVE_UPDATE_TS, id)
-    #logger("Id: ",id, " marked as active")
-
-    #Run audio file
-    audioCmd = "mpg321 --gain 100 --quiet"
-    osCmd = audioCmd + " " + getAudioBasePath() + file
-    #logger("_INFO_","os.command: ",osCmd)
-    os.system(osCmd)
-    
-    #Use Id to mark entry as inactive
-    Models(Db(dbc.MYSQL_DB).connection()).push(ModelType.FOR_ID_UNSET_ACTIVE, id)
-    logger("_INFO_", "End of executeAudioFileOnSeparateThread for ", file, "id=", id)
-    return    
-
+    """
 def getCandidateAudioFiles(modelType, numberOfChannels):
     #print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
     if(numberOfChannels == 0):
@@ -298,6 +271,38 @@ def getCandidateAudioFiles(modelType, numberOfChannels):
     
     return candidates
 
+
+def purgeDeadEntries(seconds):
+    return int(Models(Db(dbc.MYSQL_DB).connection()).push(ModelType.UNSET_ACTIVE_FOR_DEAD_ENTRIES, seconds))
+
+def getAudioBasePath():
+    cwd = os.getcwd()
+    if cwd.endswith("/birdbox"):
+        cwd += "/application"
+    
+    if cwd.endswith("/application"):
+        cwd += "/static/sounds/"
+        return cwd
+
+    return ""
+
+def executeAudioFileOnSeparateThread(id, file):
+    #print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
+    #Use Id to mark entry as active
+    Models(Db(dbc.MYSQL_DB).connection()).push(ModelType.FOR_ID_SET_ACTIVE_UPDATE_TS, id)
+    #logger("Id: ",id, " marked as active")
+
+    #Run audio file
+    audioCmd = "mpg321 --gain 100 --quiet"
+    osCmd = audioCmd + " " + getAudioBasePath() + file
+    #logger("_INFO_","os.command: ",osCmd)
+    os.system(osCmd)
+    
+    #Use Id to mark entry as inactive
+    Models(Db(dbc.MYSQL_DB).connection()).push(ModelType.FOR_ID_UNSET_ACTIVE, id)
+    logger("_INFO_", "End of executeAudioFileOnSeparateThread for ", file, "id=", id)
+    return    
+
 ####################################################################################
 def isLightRingActivated():
     updateGlobalSettings()
@@ -310,23 +315,31 @@ def processTrigger(triggerType):
     #print("@processTrigger: ",triggerType)
 
     updateGlobalSettings()
+    c = []
 
     logger("_INFO_", "Trigger type:", triggerType)
     if(triggerType == TriggerType.MOTION):
         if(isMotionTriggerActive() == True):
-            processMotionTrigger(triggerType="motion")
+            c = processMotionTrigger(triggerType="motion")
         else:
             logger("_INFO_", "Motion triggers are disabled in appSettings. Ignoring")
     elif(triggerType == TriggerType.ON_DEMAND_SOLO):
-        processMotionTrigger(triggerType="solo")
+        c = processMotionTrigger(triggerType="solo")
     elif(triggerType == TriggerType.ON_DEMAND_SYMPHONY):
-        processMotionTrigger(triggerType="symphony")        
+        c = processMotionTrigger(triggerType="symphony")        
     elif(triggerType == TriggerType.ALARM):
         print("process alarm")
     elif(triggerType == TriggerType.BUTTON_PRESS):
-        processMotionTrigger(triggerType="solo")
+        c = processMotionTrigger(triggerType="solo")
     else:
         print("unknown trigger type: ", triggerType)
+        return
+
+    #Once we have candidates, start audio threads here
+    for item in c:
+        logger("_INFO_", "candidate item: ", item)
+        adi = AudioDbInterface(item[dbc.KEY_ID], item[dbc.KEY_AUDIO_FILE])
+        adi.start()
 
     return
 
@@ -473,5 +486,45 @@ def disableAmbientChannelAndUpdateSettings(ch):
     return
 
 ###################################################################################
+class AudioDbInterface(Thread):
+    def __init__(self, id, audioFileName):
+        Thread.__init__(self)
+
+        self._id = id
+        self._audioFileName = audioFileName
+        return
+
+    def run(self):
+        global candidateAudioThreads
+
+        atSettings = {}
+        atSettings['fp'] = getAudioBasePath()+self._audioFileName
+        atSettings['vol'] = 100
+        atSettings['repeat'] = False
+        atSettings['tName'] = "AudioThread_id_" + str(self._id)
+        audioThread = at(**atSettings)
+
+        #Use Id to mark entry as active
+        Models(Db(dbc.MYSQL_DB).connection()).push(ModelType.FOR_ID_SET_ACTIVE_UPDATE_TS, self._id)
+
+        #Start audio thread
+        audioThread.start()
+
+        candidateAudioThreads.append(audioThread)
+
+        logger("_INFO_", "  Starting thread: ", audioThread.getName(), "  state=", audioThread.isAlive())
+
+        #Wait for completion
+        audioThread.join()
+
+        #Use Id to mark entry as inactive
+        Models(Db(dbc.MYSQL_DB).connection()).push(ModelType.FOR_ID_UNSET_ACTIVE, self._id)
+
+        candidateAudioThreads.remove(audioThread)
+
+        logger("_INFO_", "  Thread ending: ", audioThread.getName(), "  state=", audioThread.isAlive())
+        return
+###################################################################################
+
 if __name__ == "__main__":
     print("Error: Interface.py cannot be executed as a standalone python program")
