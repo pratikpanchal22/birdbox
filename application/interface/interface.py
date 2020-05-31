@@ -109,6 +109,7 @@ def processMotionTrigger(appSettings, **kwargs):
     logger("_INFO_", "{} {}".format("ALL CHILD THREADS COMPLETED: for parent thread: ", str(current_thread().name)))    
     return
     """
+    
 def getCandidateAudioFiles(modelType, appSettings, numberOfChannels):
     #print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
     if(numberOfChannels == 0):
@@ -183,9 +184,7 @@ def getCandidateAudioFiles(modelType, appSettings, numberOfChannels):
     #for c in candidates:
     #    print (c)
     #    candidateAudioFiles.append(c[1])
-    
     return candidates
-
 
 def purgeDeadEntries(seconds):
     return int(Models(Db(dbc.MYSQL_DB).connection()).push(ModelType.UNSET_ACTIVE_FOR_DEAD_ENTRIES, seconds))
@@ -199,28 +198,10 @@ def getAudioBasePath():
         cwd += "/static/sounds/"
         return cwd
 
-    return ""
-
-def executeAudioFileOnSeparateThread(id, file):
-    #print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
-    #Use Id to mark entry as active
-    Models(Db(dbc.MYSQL_DB).connection()).push(ModelType.FOR_ID_SET_ACTIVE_UPDATE_TS, id)
-    #logger("Id: ",id, " marked as active")
-
-    #Run audio file
-    audioCmd = "mpg321 --gain 100 --quiet"
-    osCmd = audioCmd + " " + getAudioBasePath() + file
-    #logger("_INFO_","os.command: ",osCmd)
-    os.system(osCmd)
-    
-    #Use Id to mark entry as inactive
-    Models(Db(dbc.MYSQL_DB).connection()).push(ModelType.FOR_ID_UNSET_ACTIVE, id)
-    logger("_INFO_", "End of executeAudioFileOnSeparateThread for ", file, "id=", id)
-    return    
+    return ""   
 
 ####################################################################################
 def isLightRingActivated():
-    
     # TODO: Fetch relevant setting
     # Right now returning back motion enabled boolean
     return AppSettings().isMotionTriggerActive()
@@ -258,7 +239,9 @@ def processTrigger(triggerType):
 
     return
 
+##############################################################################
 # This handler is called whenever saveSettings is called from client
+##############################################################################
 def settingsChangeHandler():
     global ambientAudioChannel1, ambientAudioChannel2
 
@@ -378,10 +361,6 @@ def terminateSoundscapeAudioThread(audioThread):
     if(globals()[audioThread] != None and globals()[audioThread].isAlive() == True):
         globals()[audioThread].terminate()
         globals()[audioThread] = None
-    return
-
-def atTerminationCb(text):
-    logger("_INFO_", text)
     return
 
 def disableAmbientChannelAndUpdateSettings(ch):
