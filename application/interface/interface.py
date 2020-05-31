@@ -37,95 +37,10 @@ ambientAudioChannel1 = None
 ambientAudioChannel2 = None
 candidateAudioThreads = []
 
-def updateGlobalSettings():
-    global appSettings
-    try:
-        appSettings = json.loads(Models(Db(dbc.MYSQL_DB).connection()).fetch(ModelType.APP_SETTINGS)[0][dbc.KEY_SETTINGS])
-    except Exception as e:
-        logger("_ERROR_", "Error: Unable to fetch data from database")
-        logger("_EXCEPTION_", str(e))
-    return
-
-def isSilentPeriodActive():
-    dv = False
-    try:
-        silentPeriodEnabled = appSettings[dbc.KEY_SILENT_PERIOD][dbc.KEY_ENABLED]
-        silentStartTime = parser.parse(appSettings[dbc.KEY_SILENT_PERIOD][dbc.KEY_START_TIME])
-        silentEndTime = parser.parse(appSettings[dbc.KEY_SILENT_PERIOD][dbc.KEY_END_TIME])
-    except:
-        logger("_ERROR_", "appSettings doesn't exist")
-        return dv
-
-    if(silentPeriodEnabled == False):
-        return False
-
-    #Local time
-    currentTime = datetime.datetime.now()
-    logger("_INFO_","    ** silentStartTime = ", silentStartTime)
-    logger("_INFO_","    ** currentTime = ", currentTime)
-    logger("_INFO_","    ** silentEndTime = ", silentEndTime)
-    
-    if (silentStartTime < silentEndTime):
-        if(silentStartTime <= currentTime < silentEndTime):
-            dv = True
-        else:
-            dv = False
-    elif (silentStartTime > silentEndTime):
-        if(silentStartTime <= currentTime or currentTime < silentEndTime):
-            dv = True
-        else:
-            dv = False
-    else:
-        if(silentStartTime == currentTime == silentEndTime):
-            dv = True
-        else:
-            dv = False
-
-    return dv
-    
-def isMotionTriggerActive():
-    #Default
-    dv = True
-    try:
-        dv = appSettings[dbc.KEY_MOTION_TRIGGERS][dbc.KEY_ENABLED] 
-    except:
-        logger("_ERROR_", "appSettings[dbc.KEY_MOTION_TRIGGERS][dbc.KEY_ENABLED] doesn't exist")
-    return dv
-
-def maxNumberOfAllowedSimultaneousChannels():
-    #Default
-    dv = 5
-    try:
-        dv = int(appSettings[dbc.KEY_SYMPHONY][dbc.KEY_MAXIMUM])
-    except:
-        logger("_ERROR_", "appSettings[dbc.KEY_SYMPHONY][dbc.KEY_MAXIMUM] doesn't exist")
-    return dv
-
-def isBirdChoiceLimitedToSameSpecies():
-    #Default
-    dv = False
-    try:
-        dv = appSettings[dbc.KEY_SYMPHONY][dbc.KEY_LIMIT_TO_SAME_SPECIES] 
-    except:
-        logger("_ERROR_", "appSettings[dbc.KEY_SYMPHONY][dbc.KEY_LIMIT_TO_SAME_SPECIES] doesn't exist")
-    return dv
-
-def maxVolume():
-    #Default
-    dv = 100
-    try:
-        dv = int(appSettings[dbc.KEY_VOLUME])
-    except:
-        logger("_ERROR_", "appSettings[dbc.KEY_VOLUME] doesn't exist")
-    return dv
-
-def isContinuousPlaybackEnabled():
-    return False
-
 ###################################################
 ##########  ~~~ TRIGGER TYPE: MOTION ~~~ ##########
 ###################################################
-def processMotionTrigger(**kwargs):
+def processMotionTrigger(appSettings, **kwargs):
     #print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
 
     #TODO: Right now don't see any need to push motion events in db. So skipping. 
@@ -133,9 +48,9 @@ def processMotionTrigger(**kwargs):
 
     #Validations
     #1. Verify that not in silent period
-    if(isSilentPeriodActive()):
+    if(appSettings.isSilentPeriodActive()):
         logger("_INFO_", "Silent period active. Exiting")
-        return
+        return []
 
     #2. TODO: Verify that required time has passed since last playback
     
@@ -152,23 +67,23 @@ def processMotionTrigger(**kwargs):
             activeEntries = Models(Db(dbc.MYSQL_DB).connection()).fetch(ModelType.ACTIVE_ENTRIES)
 
     logger("_INFO_", "Active entries:", activeEntries)
-    logger("_INFO_", "Active/maxAllowed=", len(activeEntries), "/", maxNumberOfAllowedSimultaneousChannels())
-    if(len(activeEntries) >= maxNumberOfAllowedSimultaneousChannels()):
+    logger("_INFO_", "Active/maxAllowed=", len(activeEntries), "/", appSettings.maxNumberOfAllowedSimultaneousChannels())
+    if(len(activeEntries) >= appSettings.maxNumberOfAllowedSimultaneousChannels()):
         logger ("_INFO_", "Ignoring trigger. Exiting\n")
-        return
+        return []
 
     #4. Compute number of channels to implement if not provided
     if (kwargs.get("triggerType") == "solo"):
         numberOfChannels = 1
     elif (kwargs.get("triggerType") == "symphony"):         
-        numberOfChannels = maxNumberOfAllowedSimultaneousChannels() - len(activeEntries)
+        numberOfChannels = appSettings.maxNumberOfAllowedSimultaneousChannels() - len(activeEntries)
     elif (kwargs.get("triggerType") == "motion"):
         if(randomizeNumberOfChannels):
-            numberOfChannels = random.randint(1, maxNumberOfAllowedSimultaneousChannels()-len(activeEntries))
+            numberOfChannels = random.randint(1, appSettings.maxNumberOfAllowedSimultaneousChannels()-len(activeEntries))
         else:
-            numberOfChannels = maxNumberOfAllowedSimultaneousChannels() - len(activeEntries)
+            numberOfChannels = appSettings.maxNumberOfAllowedSimultaneousChannels() - len(activeEntries)
     
-    candidates = getCandidateAudioFiles(CandidateSelectionModels.RNDM_TOP_75PC, numberOfChannels)
+    candidates = getCandidateAudioFiles(CandidateSelectionModels.RNDM_TOP_75PC, appSettings, numberOfChannels)
 
     return candidates
     
@@ -194,10 +109,10 @@ def processMotionTrigger(**kwargs):
     logger("_INFO_", "{} {}".format("ALL CHILD THREADS COMPLETED: for parent thread: ", str(current_thread().name)))    
     return
     """
-def getCandidateAudioFiles(modelType, numberOfChannels):
+def getCandidateAudioFiles(modelType, appSettings, numberOfChannels):
     #print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
     if(numberOfChannels == 0):
-        return
+        return []
     
     #Scope: 
     # (1) Fetch all sorted by last_updated asc
@@ -235,8 +150,8 @@ def getCandidateAudioFiles(modelType, numberOfChannels):
 
     if(numberOfChannels > 1):
         speciesConstrainedSet = []
-        logger("INFO_", "Limit to same species: ", isBirdChoiceLimitedToSameSpecies())
-        if(isBirdChoiceLimitedToSameSpecies()):
+        logger("INFO_", "Limit to same species: ", appSettings.isBirdChoiceLimitedToSameSpecies())
+        if(appSettings.isBirdChoiceLimitedToSameSpecies()):
             for d in data:
                 if(d == candidates[0]):
                     print(d," :Already exists. Skipping")
@@ -305,32 +220,32 @@ def executeAudioFileOnSeparateThread(id, file):
 
 ####################################################################################
 def isLightRingActivated():
-    updateGlobalSettings()
+    
     # TODO: Fetch relevant setting
     # Right now returning back motion enabled boolean
-    return isMotionTriggerActive()
+    return AppSettings().isMotionTriggerActive()
 
 def processTrigger(triggerType):
     #logger("_INFO_", "\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
     #print("@processTrigger: ",triggerType)
 
-    updateGlobalSettings()
     c = []
+    latestSettings = AppSettings()
 
     logger("_INFO_", "Trigger type:", triggerType)
     if(triggerType == TriggerType.MOTION):
-        if(isMotionTriggerActive() == True):
-            c = processMotionTrigger(triggerType="motion")
+        if(latestSettings.isMotionTriggerActive() == True):
+            c = processMotionTrigger(latestSettings, triggerType="motion")
         else:
             logger("_INFO_", "Motion triggers are disabled in appSettings. Ignoring")
     elif(triggerType == TriggerType.ON_DEMAND_SOLO):
-        c = processMotionTrigger(triggerType="solo")
+        c = processMotionTrigger(latestSettings, triggerType="solo")
     elif(triggerType == TriggerType.ON_DEMAND_SYMPHONY):
-        c = processMotionTrigger(triggerType="symphony")        
+        c = processMotionTrigger(latestSettings, triggerType="symphony")        
     elif(triggerType == TriggerType.ALARM):
         print("process alarm")
     elif(triggerType == TriggerType.BUTTON_PRESS):
-        c = processMotionTrigger(triggerType="solo")
+        c = processMotionTrigger(latestSettings, triggerType="solo")
     else:
         print("unknown trigger type: ", triggerType)
         return
@@ -346,7 +261,6 @@ def processTrigger(triggerType):
 # This handler is called whenever saveSettings is called from client
 def settingsChangeHandler():
     global ambientAudioChannel1, ambientAudioChannel2
-    updateGlobalSettings()
 
     latestSettings = AppSettings()
     logger("_INFO_", "\nLatest settings: id=", str(latestSettings.getId()))
