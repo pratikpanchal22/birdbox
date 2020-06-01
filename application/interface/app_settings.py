@@ -124,5 +124,22 @@ class AppSettings:
         return dv
 
     def isContinuousPlaybackEnabled(self):
-        return False
+        dv = False
+        try:
+            dv = self._settingsJson[dbc.KEY_CONTINUOUS_PLAYBACK][dbc.KEY_ENABLED] 
+        except:
+            logger("_ERROR_", "appSettings[0][dbc.KEY_CONTINUOUS_PLAYBACK][dbc.KEY_ENABLED] doesn't exist")
+        return dv
 
+    def isContinousPbBirdsEnabled(self):
+        if(self.isContinuousPlaybackEnabled == False):
+            return False
+
+        #Default
+        dv = False
+        try:
+            dv = self._settingsJson[dbc.KEY_CONTINUOUS_PLAYBACK][dbc.KEY_BIRDS_ENABLED] 
+        except:
+            logger("_ERROR_", "appSettings[0][dbc.KEY_CONTINUOUS_PLAYBACK][dbc.KEY_BIRDS_ENABLED] doesn't exist")
+        return dv
+        

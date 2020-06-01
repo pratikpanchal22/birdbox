@@ -37,10 +37,10 @@ ambientAudioChannel1 = None
 ambientAudioChannel2 = None
 candidateAudioThreads = []
 
-###################################################
-##########  ~~~ TRIGGER TYPE: MOTION ~~~ ##########
-###################################################
-def processMotionTrigger(appSettings, **kwargs):
+########################################################
+##########  ~~~ GET CANDIDATE AUDIO FILES ~~~ ##########
+########################################################
+def getCandidateAudioFiles(appSettings, **kwargs):
     #print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
 
     #TODO: Right now don't see any need to push motion events in db. So skipping. 
@@ -79,35 +79,7 @@ def processMotionTrigger(appSettings, **kwargs):
     else:
         return []
     
-    candidates = getCandidateAudioFiles(CandidateSelectionModels.RNDM_TOP_75PC, appSettings, numberOfChannels)
-
-    return candidates
-    
-    """ audio threads will be managed by the caller
-    #print("Candidate audio files:")
-    logger("_INFO", "\nFINAL CANDIDATES. Requesting:")
-    threads = []
-    for c in candidates:
-        logger("_INFO_", "{:>4.4} {:32.32} {}".format(str(c[dbc.KEY_ID]),c[dbc.KEY_NAME],c[dbc.KEY_AUDIO_FILE]))
-        t = Thread(target=executeAudioFileOnSeparateThread, args=[c[dbc.KEY_ID], c[dbc.KEY_AUDIO_FILE]])
-        t.name = "thread_id_"+str(c[dbc.KEY_ID])
-        threads.append(t)
-
-    #Start threads
-    for t in threads:
-        t.start()    
-        logger("_INFO_", " {} {:<10} {} {:<10}".format("Thread: ", str(t.name), "Status: ", str(t.isAlive())))
-
-    #Wait on threads
-    for t in threads:
-        t.join()
-
-    logger("_INFO_", "{} {}".format("ALL CHILD THREADS COMPLETED: for parent thread: ", str(current_thread().name)))    
-    return
-    """
-
-def getCandidateAudioFiles(modelType, appSettings, numberOfChannels):
-    #print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
+    #candidates = getCandidateAudioFiles(CandidateSelectionModels.RNDM_TOP_75PC, appSettings, numberOfChannels)
     if(numberOfChannels == 0):
         return []
     
@@ -181,6 +153,7 @@ def getCandidateAudioFiles(modelType, appSettings, numberOfChannels):
     #    print (c)
     #    candidateAudioFiles.append(c[1])
     return candidates
+    
 
 def purgeDeadEntries(seconds):
     return int(Models(Db(dbc.MYSQL_DB).connection()).push(ModelType.UNSET_ACTIVE_FOR_DEAD_ENTRIES, seconds))
@@ -220,16 +193,16 @@ def processTrigger(triggerType):
             logger("_INFO_", "Silent period active. Exiting")
             return 
 
-        c = processMotionTrigger(latestSettings, triggerType="motion")
+        c = getCandidateAudioFiles(latestSettings, triggerType="motion")
 
     elif(triggerType == TriggerType.ON_DEMAND_SOLO):
-        c = processMotionTrigger(latestSettings, triggerType="solo")
+        c = getCandidateAudioFiles(latestSettings, triggerType="solo")
     elif(triggerType == TriggerType.ON_DEMAND_SYMPHONY):
-        c = processMotionTrigger(latestSettings, triggerType="symphony")        
+        c = getCandidateAudioFiles(latestSettings, triggerType="symphony")        
     elif(triggerType == TriggerType.ALARM):
         print("process alarm")
     elif(triggerType == TriggerType.BUTTON_PRESS):
-        c = processMotionTrigger(latestSettings, triggerType="solo")
+        c = getCandidateAudioFiles(latestSettings, triggerType="solo")
     else:
         print("unknown trigger type: ", triggerType)
         return
@@ -280,7 +253,7 @@ def settingsChangeHandler():
             continue
 
         #Case 2: Continuous playback/upstage was turned ON or MODIFIED or UNMODIFIED
-        if(sNew['continuousPlayback']['enabled'] == True and sNew['continuousPlayback']['upStageEnabled'] == True):
+        elif(sNew['continuousPlayback']['enabled'] == True and sNew['continuousPlayback']['upStageEnabled'] == True):
             #Collect new settings into a dictionary:
             
             newAtSettings = {
@@ -295,6 +268,53 @@ def settingsChangeHandler():
     #Master Volume Handler
     if(sNew['volume'] != sOld['volume']):
         av.setVolume(int(sNew['volume']))
+
+    #Continuous playback handler - birds
+    #Case 1: Cp/birds was turned off
+    if((sNew['continuousPlayback']['enabled'] == False or sNew['continuousPlayback']['birdsEnabled'] == False) and
+       (sOld['continuousPlayback']['enabled'] == True and sOld['continuousPlayback']['birdsEnabled'] == True)):
+       logger("_INFO_", "Cp/birds was turned OFF - will be handled automatically")
+
+    #Case 2: Cp/birds was turned ON 
+    elif((sNew['continuousPlayback']['enabled'] == True and sNew['continuousPlayback']['birdsEnabled'] == True) and
+       (sOld['continuousPlayback']['enabled'] == False or sOld['continuousPlayback']['birdsEnabled'] == False)):
+        logger("_INFO_", "Cp/birds was turned ON")
+        t = Thread(target=continousPbBirdsThreadEmulation)
+        t.start()
+
+    #Case 3: Cp/birds unchanged
+    else: 
+        logger("_INFO_", "Cp/birds setting unchanged")
+
+    return
+
+def continousPbBirdsThreadEmulation(**kwargs):
+    global candidateAudioThreads
+
+    s = AppSettings()
+    repeat = True
+    while (repeat == True):
+
+        if(s.isContinousPbBirdsEnabled() == False):
+            #kill all audioThreads
+            for a in candidateAudioThreads:
+                a.terminate()
+            
+            logger("_INFO_", "Audio threads stopped. Exiting")
+            repeat = False
+            continue
+
+        logger("_INFO_", "AudioThreads: Live: ", str(len(candidateAudioThreads)), "  Max Allowed:", str(s.maxNumberOfAllowedSimultaneousChannels()))
+        if(len(candidateAudioThreads) < s.maxNumberOfAllowedSimultaneousChannels()):
+            c = getCandidateAudioFiles(s, triggerType="solo")
+            for item in c:
+                logger("_INFO_", "candidate item: ", item)
+                adi = AudioDbInterface(item[dbc.KEY_ID], item[dbc.KEY_AUDIO_FILE])
+                adi.start()
+
+        time.sleep(5)
+        logger("_INFO_", "Checking if cb/birds is still active")
+        s.refresh()
     
     return
 
