@@ -45,13 +45,7 @@ def processMotionTrigger(appSettings, **kwargs):
 
     #TODO: Right now don't see any need to push motion events in db. So skipping. 
     #But if required, this will be the place to do so. 
-
-    #Validations
-    #1. Verify that not in silent period
-    if(appSettings.isSilentPeriodActive()):
-        logger("_INFO_", "Silent period active. Exiting")
-        return []
-
+    
     #2. TODO: Verify that required time has passed since last playback
     
     #Purge dead entries
@@ -72,7 +66,7 @@ def processMotionTrigger(appSettings, **kwargs):
         logger ("_INFO_", "Ignoring trigger. Exiting\n")
         return []
 
-    #4. Compute number of channels to implement if not provided
+    #4. Compute number of channels to implement
     if (kwargs.get("triggerType") == "solo"):
         numberOfChannels = 1
     elif (kwargs.get("triggerType") == "symphony"):         
@@ -82,6 +76,8 @@ def processMotionTrigger(appSettings, **kwargs):
             numberOfChannels = random.randint(1, appSettings.maxNumberOfAllowedSimultaneousChannels()-len(activeEntries))
         else:
             numberOfChannels = appSettings.maxNumberOfAllowedSimultaneousChannels() - len(activeEntries)
+    else:
+        return []
     
     candidates = getCandidateAudioFiles(CandidateSelectionModels.RNDM_TOP_75PC, appSettings, numberOfChannels)
 
@@ -109,7 +105,7 @@ def processMotionTrigger(appSettings, **kwargs):
     logger("_INFO_", "{} {}".format("ALL CHILD THREADS COMPLETED: for parent thread: ", str(current_thread().name)))    
     return
     """
-    
+
 def getCandidateAudioFiles(modelType, appSettings, numberOfChannels):
     #print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
     if(numberOfChannels == 0):
@@ -215,10 +211,17 @@ def processTrigger(triggerType):
 
     logger("_INFO_", "Trigger type:", triggerType)
     if(triggerType == TriggerType.MOTION):
-        if(latestSettings.isMotionTriggerActive() == True):
-            c = processMotionTrigger(latestSettings, triggerType="motion")
-        else:
-            logger("_INFO_", "Motion triggers are disabled in appSettings. Ignoring")
+        #1. Verify that triggers are enabled
+        if(latestSettings.isMotionTriggerActive() == False):
+            logger("_INFO_", "Motion triggers are disabled in appSettings. Exiting")
+            return 
+        #2. Verify that not in silent period
+        if(latestSettings.isSilentPeriodActive()):
+            logger("_INFO_", "Silent period active. Exiting")
+            return 
+
+        c = processMotionTrigger(latestSettings, triggerType="motion")
+
     elif(triggerType == TriggerType.ON_DEMAND_SOLO):
         c = processMotionTrigger(latestSettings, triggerType="solo")
     elif(triggerType == TriggerType.ON_DEMAND_SYMPHONY):
