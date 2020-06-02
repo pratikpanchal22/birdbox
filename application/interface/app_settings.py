@@ -132,7 +132,7 @@ class AppSettings:
         return dv
 
     def isContinousPbBirdsEnabled(self):
-        if(self.isContinuousPlaybackEnabled == False):
+        if(self.isContinuousPlaybackEnabled() == False):
             return False
 
         #Default
