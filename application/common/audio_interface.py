@@ -6,8 +6,8 @@ import subprocess
 import re
 import threading  
 #
-#from application.common.utility import logger
 from common.utility import logger
+from common.customizable_timer_thread import CustomizableTimerThread
 
 class AlsaVolume:
     targetVolume = 75
@@ -72,13 +72,13 @@ class AlsaVolume:
 #if __name__ == '__main__':
 #    print("\nEntering Alsa volume main")
 #    print(AlsaVolume.getCurrentVolume())
-#    AlsaVolume.setVolume(100)
-    
+#    AlsaVolume.setVolume(100)    
 
-class AudioThread(threading.Thread):
+class AudioThread(CustomizableTimerThread):
     instanceCount = 0
     def __init__(self, **kwargs):
-        threading.Thread.__init__(self)
+        #threading.Thread.__init__(self)
+        super().__init__()
 
         logger("_INFO_", "\n>>>> Initializing a new AudioThread Object")
 
@@ -89,8 +89,6 @@ class AudioThread(threading.Thread):
         self._repeat = True
         self._pbStartTime = 0
         self._pbStartTimeStatic = 0
-        self._futureTerminationCallback = None
-        self.terminateAt = None
         
         try:
             self.fp = kwargs['fp']
@@ -176,34 +174,6 @@ class AudioThread(threading.Thread):
             logger("_INFO_", "Changing vol to:", volume)    
             self.vol = volume
             self.__atSameFrameSwitchTrack()
-        return
-
-    def setFutureTerminationTime(self, terminationTime):
-        if(self.terminateAt == terminationTime):
-            return
-        
-        try:
-            futureTime = parser.parse(terminationTime)
-        except:
-            logger("_INFO_", "Error: Unknown terminationTime: ", str(terminationTime))
-            return
-
-        self.terminateAt = terminationTime
-        logger("_INFO_", "Changing termination time to:", self.terminateAt)    
-
-        if(self._futureTerminationCallback != None):
-            self._futureTerminationCallback.cancel()
-            self._futureTerminationCallback = None
-        
-        #compute time
-        currentTime = datetime.now()
-        if(currentTime>futureTime):
-            futureTime += timedelta(hours=24)
-
-        secondsToTerminate = (futureTime-currentTime).total_seconds()
-        logger("_INFO_", "Setting up termination for ", terminationTime, " in ", secondsToTerminate, " seconds")
-        self._futureTerminationCallback = threading.Timer(secondsToTerminate, self.terminate, args=[])
-        self._futureTerminationCallback.start()
         return
 
     def terminate(self):

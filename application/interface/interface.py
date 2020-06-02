@@ -10,6 +10,7 @@ import time
 #
 from common.audio_interface import AudioThread as at
 from common.audio_interface import AlsaVolume as av
+from common.customizable_timer_thread import CustomizableTimerThread
 from common.utility import logger
 from models import dbConfig as dbc
 from models.data import Models
@@ -36,6 +37,7 @@ appSettings = ""
 ambientAudioChannel1 = None
 ambientAudioChannel2 = None
 candidateAudioThreads = []
+continuousPlaybackThread = None
 
 ########################################################
 ##########  ~~~ GET CANDIDATE AUDIO FILES ~~~ ##########
@@ -219,7 +221,7 @@ def processTrigger(triggerType):
 # This handler is called whenever saveSettings is called from client
 ##############################################################################
 def settingsChangeHandler():
-    global ambientAudioChannel1, ambientAudioChannel2
+    global ambientAudioChannel1, ambientAudioChannel2, continuousPlaybackThread
 
     latestSettings = AppSettings()
     logger("_INFO_", "\nLatest settings: id=", str(latestSettings.getId()))
@@ -232,6 +234,7 @@ def settingsChangeHandler():
     logger("_INFO_", "\n    ### Current Settings: ", sNew)
     logger("_INFO_", "\n    ### Previous Settings: ", sOld)
 
+    ########################################################
     #Ambient Sounscape handler
     for ambience in ['ambience1', 'ambience2']:
         ambientAudioChannel = ""
@@ -265,10 +268,12 @@ def settingsChangeHandler():
             t = Thread(target=processUpstageSoundscape, args=(ambientAudioChannel,), kwargs={**newAtSettings})
             t.start()
 
+    ########################################################
     #Master Volume Handler
     if(sNew['volume'] != sOld['volume']):
         av.setVolume(int(sNew['volume']))
 
+    ########################################################
     #Continuous playback handler - birds
     #Case 1: Cp/birds was turned off
     if((sNew['continuousPlayback']['enabled'] == False or sNew['continuousPlayback']['birdsEnabled'] == False) and
@@ -285,6 +290,24 @@ def settingsChangeHandler():
     #Case 3: Cp/birds unchanged
     else: 
         logger("_INFO_", "Cp/birds setting unchanged")
+
+    ########################################################
+    #Continuous playback
+    if(sNew['continuousPlayback']['enabled'] == True):
+        if(continuousPlaybackThread == None or continuousPlaybackThread.isAlive() == False):
+            config = {
+                'terminateAt' : sNew['continuousPlayback']['endTime']
+            }
+            continuousPlaybackThread = ContinuousPlaybackUiThread(**config)
+            continuousPlaybackThread.start()
+        else:
+            if(sNew['continuousPlayback']['endTime'] != sOld['continuousPlayback']['endTime']):
+                continuousPlaybackThread.setFutureTerminationTime(sNew['continuousPlayback']['endTime'])
+    else:
+        if(continuousPlaybackThread != None and continuousPlaybackThread.isAlive() == True):
+            continuousPlaybackThread.terminate()
+            continuousPlaybackThread = None
+
 
     return
 
@@ -401,6 +424,39 @@ def disableAmbientChannelAndUpdateSettings(ch):
     logger("_INFO_", "Settings updated inplace in database. Return: ", str(a))
     return
 
+###################################################################################
+class ContinuousPlaybackUiThread(CustomizableTimerThread):
+    def __init__(self, **kwargs):
+        #threading.Thread.__init__(self)
+        super().__init__()
+        logger("_INFO_", "CpUiThread")
+        self._rerun = False
+
+        try:
+            self.setFutureTerminationTime(kwargs['terminateAt'])
+            logger("_INFO_", "CpUiThread terminate at:", kwargs['terminateAt'])
+            self._rerun = True
+        except KeyError:
+            self.terminateAt = None
+
+    def run(self):
+        while(self._rerun == True):
+            continue
+        return
+
+    def terminate(self):
+        logger("_INFO_", "Terminating continuous playback")
+
+        #Cancel existing callback
+        if(self._futureTerminationCallback != None):
+            self._futureTerminationCallback.cancel()
+
+        #Update the database
+        queryFrag = "'$.continuousPlayback.enabled', False"
+        Models(Db(dbc.MYSQL_DB).connection()).push(ModelType.UPDATE_APP_SETTINGS_IN_PLACE, str(queryFrag))
+
+        self._rerun = False
+        return
 ###################################################################################
 class AudioDbInterface(Thread):
     def __init__(self, id, audioFileName):
