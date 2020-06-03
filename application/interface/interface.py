@@ -36,7 +36,6 @@ randomizeNumberOfChannels = True #TODO: get this from settings
 appSettings = ""
 ambientAudioChannel1 = None
 ambientAudioChannel2 = None
-candidateAudioThreads = []
 continuousPlaybackThread = None
 
 ########################################################
@@ -312,7 +311,6 @@ def settingsChangeHandler():
     return
 
 def continousPbBirdsThreadEmulation(**kwargs):
-    global candidateAudioThreads
 
     s = AppSettings()
     repeat = True
@@ -320,15 +318,15 @@ def continousPbBirdsThreadEmulation(**kwargs):
 
         if(s.isContinousPbBirdsEnabled() == False):
             #kill all audioThreads
-            for a in candidateAudioThreads:
+            for a in AudioDbInterface.candidateAudioThreads:
                 a.terminate()
             
             logger("_INFO_", "Audio threads stopped. Exiting")
             repeat = False
             continue
 
-        logger("_INFO_", "AudioThreads: Live: ", str(len(candidateAudioThreads)), "  Max Allowed:", str(s.maxNumberOfAllowedSimultaneousChannels()))
-        if(len(candidateAudioThreads) < s.maxNumberOfAllowedSimultaneousChannels()):
+        logger("_INFO_", "AudioThreads: Live: ", str(len(AudioDbInterface.candidateAudioThreads)), "  Max Allowed:", str(s.maxNumberOfAllowedSimultaneousChannels()))
+        if(len(AudioDbInterface.candidateAudioThreads) < s.maxNumberOfAllowedSimultaneousChannels()):
             c = getCandidateAudioFiles(s, triggerType="solo")
             for item in c:
                 logger("_INFO_", "candidate item: ", item)
@@ -459,6 +457,8 @@ class ContinuousPlaybackUiThread(CustomizableTimerThread):
         return
 ###################################################################################
 class AudioDbInterface(Thread):
+    candidateAudioThreads = []
+
     def __init__(self, id, audioFileName):
         Thread.__init__(self)
 
@@ -467,8 +467,6 @@ class AudioDbInterface(Thread):
         return
 
     def run(self):
-        global candidateAudioThreads
-
         atSettings = {}
         atSettings['fp'] = getAudioBasePath()+self._audioFileName
         atSettings['vol'] = 100
@@ -482,7 +480,7 @@ class AudioDbInterface(Thread):
         #Start audio thread
         audioThread.start()
 
-        candidateAudioThreads.append(audioThread)
+        AudioDbInterface.candidateAudioThreads.append(audioThread)
 
         logger("_INFO_", "  Starting thread: ", audioThread.getName(), "  state=", audioThread.isAlive())
 
@@ -492,7 +490,7 @@ class AudioDbInterface(Thread):
         #Use Id to mark entry as inactive
         Models(Db(dbc.MYSQL_DB).connection()).push(ModelType.FOR_ID_UNSET_ACTIVE, self._id)
 
-        candidateAudioThreads.remove(audioThread)
+        AudioDbInterface.candidateAudioThreads.remove(audioThread)
 
         logger("_INFO_", "  Thread ending: ", audioThread.getName(), "  state=", audioThread.isAlive())
         return
