@@ -44,10 +44,12 @@ continuousPlaybackThread = None
 def getCandidateAudioFiles(appSettings, **kwargs):
     #print("\n--> ",inspect.stack()[0][3], " CALLED BY ",inspect.stack()[1][3])
 
-    #TODO: Right now don't see any need to push motion events in db. So skipping. 
-    #But if required, this will be the place to do so. 
-    
     #2. TODO: Verify that required time has passed since last playback
+
+    try:
+        requestedChannels = kwargs['requestedChannels']
+    except:
+        requestedChannels = 1
     
     #Purge dead entries
     #Fetch
@@ -64,24 +66,23 @@ def getCandidateAudioFiles(appSettings, **kwargs):
     logger("_INFO_", "Active entries:", activeEntries)
     logger("_INFO_", "Active/maxAllowed=", len(activeEntries), "/", appSettings.maxNumberOfAllowedSimultaneousChannels())
     if(len(activeEntries) >= appSettings.maxNumberOfAllowedSimultaneousChannels()):
-        logger ("_INFO_", "Ignoring trigger. Exiting\n")
+        logger ("_INFO_", "Channels saturated. Ignoring trigger. Exiting\n")
         return []
 
     #4. Compute number of channels to implement
-    if (kwargs.get("triggerType") == "solo"):
+    if(requestedChannels == 1):
         numberOfChannels = 1
-    elif (kwargs.get("triggerType") == "symphony"):         
-        numberOfChannels = appSettings.maxNumberOfAllowedSimultaneousChannels() - len(activeEntries)
-    elif (kwargs.get("triggerType") == "motion"):
-        if(randomizeNumberOfChannels):
-            numberOfChannels = random.randint(1, appSettings.maxNumberOfAllowedSimultaneousChannels()-len(activeEntries))
+    elif(requestedChannels > 1):
+        emptyChannels = appSettings.maxNumberOfAllowedSimultaneousChannels() - len(activeEntries)
+        if(requestedChannels > emptyChannels):
+            numberOfChannels = emptyChannels
         else:
-            numberOfChannels = appSettings.maxNumberOfAllowedSimultaneousChannels() - len(activeEntries)
+            numberOfChannels = requestedChannels
+
+        if(randomizeNumberOfChannels):
+            numberOfChannels = random.randint(1, requestedChannels)
     else:
-        return []
-    
-    #candidates = getCandidateAudioFiles(CandidateSelectionModels.RNDM_TOP_75PC, appSettings, numberOfChannels)
-    if(numberOfChannels == 0):
+        logger("_ERROR_", "Unsupported requested number of channels:", str(requestedChannels))
         return []
     
     #Scope: 
@@ -182,6 +183,7 @@ def processTrigger(triggerType):
 
     c = []
     latestSettings = AppSettings()
+    maxNumberOfAllowedChannels = latestSettings.maxNumberOfAllowedSimultaneousChannels()
 
     logger("_INFO_", "Trigger type:", triggerType)
     if(triggerType == TriggerType.MOTION):
@@ -194,16 +196,18 @@ def processTrigger(triggerType):
             logger("_INFO_", "Silent period active. Exiting")
             return 
 
-        c = getCandidateAudioFiles(latestSettings, triggerType="motion")
+        c = getCandidateAudioFiles(latestSettings, requestedChannels=maxNumberOfAllowedChannels)
 
     elif(triggerType == TriggerType.ON_DEMAND_SOLO):
-        c = getCandidateAudioFiles(latestSettings, triggerType="solo")
+        numberOfChannelsRequested = 1
+        c = getCandidateAudioFiles(latestSettings, requestedChannels=numberOfChannelsRequested)
     elif(triggerType == TriggerType.ON_DEMAND_SYMPHONY):
-        c = getCandidateAudioFiles(latestSettings, triggerType="symphony")        
+        c = getCandidateAudioFiles(latestSettings, requestedChannels=maxNumberOfAllowedChannels)        
     elif(triggerType == TriggerType.ALARM):
         print("process alarm")
     elif(triggerType == TriggerType.BUTTON_PRESS):
-        c = getCandidateAudioFiles(latestSettings, triggerType="solo")
+        numberOfChannelsRequested = 1
+        c = getCandidateAudioFiles(latestSettings, requestedChannels=numberOfChannelsRequested)
     else:
         print("unknown trigger type: ", triggerType)
         return
