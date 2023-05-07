@@ -33,7 +33,7 @@ Tap on the bird to see detailed information directly from the National Park's ar
 ### Settings
 Intuitive settings for a perfect BirdSong Box experience  
   * Choose National park of your choice  
-  * Add ambient soundscapes from the Park  
+  * Add ambient soundscapes from the chosen National Park  
   * Control Bird Symphony  
   * ... and much more  
   
