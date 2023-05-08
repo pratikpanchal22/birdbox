@@ -18,7 +18,7 @@ Point your browser to birdsong.box and bookmark it!
   
   
 ### Active Birds
-The BirdSong Box can play bird songs either on demand (press the button on the BirdSong Box or the web app), on a schedule (configurable via settings), or via motion-sense (when the BirdSong Box detects motion, it can play bird songs).
+The BirdSong Box can play bird songs either on demand (press the button on the BirdSong Box or the web app), on a schedule (configurable via settings), or via motion-sense (when the BirdSong Box detects motion, it can play bird songs).  
 You can get more information (on your phone or laptop via a browser) on which birds you are listening to on the BirdSong Box when they are called by either of these 3 methods 
 
 <img src="https://github.com/pratikpanchal22/birdbox/blob/master/application/static/images/webapp_active.png" width="350">
